@@ -4,26 +4,46 @@
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      ...
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs { inherit system; };
-      in {
+        pythonEnv = pkgs.python312.withPackages (
+          ps: with ps; [
+            fastapi
+            uvicorn
+            sqlalchemy
+            psycopg2
+            redis
+            python-dotenv
+            pydantic-settings
+            passlib
+            python-jose
+            alembic
+          ]
+        );
+      in
+      {
         devShells.default = pkgs.mkShell {
           buildInputs = [
-            pkgs.python312
-            pkgs.python312Packages.fastapi
-            pkgs.python312Packages.uvicorn
-            pkgs.python312Packages.sqlalchemy
-            pkgs.python312Packages.psycopg2
+            pythonEnv
             pkgs.postgresql
             pkgs.redis
             pkgs.flutter
             pkgs.docker
+            pkgs.tree
           ];
           shellHook = ''
-            echo "Dev environment ready: FastAPI + Flutter"
+            echo "Dev environment ready: FastAPI + Flutter + Redis"
           '';
         };
-      });
+      }
+    );
 }
