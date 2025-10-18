@@ -1,0 +1,40 @@
+version: "3"
+
+services:
+  api:
+    build: ./backend
+    container_name: muehleconnect_api
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on: [ db, redis, minio ]
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+  db:
+    image: postgres:15
+    container_name: muehleconnect_db
+    restart: always
+    environment:
+      POSTGRES_DB: muehle
+      POSTGRES_USER: muehle
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: muehleconnect_redis
+    restart: always
+
+  minio:
+    image: minio/minio
+    container_name: muehleconnect_minio
+    command: server /data
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    volumes:
+      - ./data/minio:/data
