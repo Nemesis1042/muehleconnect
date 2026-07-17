@@ -1,11 +1,13 @@
 import { ThermalPrinter, PrinterTypes, CharacterSet } from 'node-thermal-printer'
 import { usb } from 'usb'
+import { SerialPort } from 'serialport'
 import { taxBreakdown } from '../shared/cart'
 import type {
   JournalReport,
   PrintJobItem,
   PrintResult,
   SaleRecord,
+  SerialPortInfo,
   Settings,
   UsbDeviceInfo
 } from '../shared/types'
@@ -138,6 +140,60 @@ class UsbEscposInterface {
   }
 }
 
+/**
+ * Talks to a serial ESC/POS receipt printer (typically connected via a USB-to-serial adapter,
+ * e.g. an FTDI chip showing up as /dev/ttyUSB0 on Linux or COMx on Windows) - a different
+ * transport entirely from `UsbEscposInterface`, but the same 3-method Interface contract.
+ * Data bits/parity/stop bits are hardcoded to 8/none/1, which covers the near-universal ESC/POS
+ * serial default; only the baud rate varies enough in practice to be worth exposing in Settings.
+ */
+class SerialEscposInterface {
+  constructor(
+    private readonly path: string,
+    private readonly baudRate: number
+  ) {}
+
+  getPrinterName(): string {
+    return `Seriell ${this.path} @ ${this.baudRate} Baud`
+  }
+
+  async isPrinterConnected(): Promise<boolean> {
+    const ports = await SerialPort.list()
+    return ports.some((p) => p.path === this.path)
+  }
+
+  async execute(buffer: Buffer): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const port = new SerialPort(
+        {
+          path: this.path,
+          baudRate: this.baudRate,
+          dataBits: 8,
+          parity: 'none',
+          stopBits: 1
+        },
+        (openErr) => {
+          if (openErr) reject(openErr)
+        }
+      )
+
+      port.once('error', reject)
+
+      port.write(buffer, (writeErr) => {
+        if (writeErr) {
+          reject(writeErr)
+          return
+        }
+        port.drain((drainErr) => {
+          port.close()
+          if (drainErr) reject(drainErr)
+          else resolve('ok')
+        })
+      })
+    })
+  }
+}
+
 /** Used when no printer is configured yet, so the app stays fully usable/testable without hardware. */
 class DryRunInterface {
   getPrinterName(): string {
@@ -156,11 +212,29 @@ interface PrinterSession {
   dryRun: boolean
 }
 
+function buildInterface(
+  settings: Settings
+): UsbEscposInterface | SerialEscposInterface | DryRunInterface {
+  if (settings.printerConnection === 'usb') {
+    const vendorId = parseInt(settings.printerVendorId, 16)
+    const productId = parseInt(settings.printerProductId, 16)
+    if (Number.isFinite(vendorId) && Number.isFinite(productId)) {
+      return new UsbEscposInterface(vendorId, productId)
+    }
+  }
+
+  if (settings.printerConnection === 'serial') {
+    if (settings.printerSerialPath && Number.isFinite(settings.printerSerialBaudRate)) {
+      return new SerialEscposInterface(settings.printerSerialPath, settings.printerSerialBaudRate)
+    }
+  }
+
+  return new DryRunInterface()
+}
+
 function createPrinterSession(settings: Settings): PrinterSession {
-  const vendorId = settings.printerVendorId ? parseInt(settings.printerVendorId, 16) : NaN
-  const productId = settings.printerProductId ? parseInt(settings.printerProductId, 16) : NaN
-  const dryRun = !(Number.isFinite(vendorId) && Number.isFinite(productId))
-  const iface = dryRun ? new DryRunInterface() : new UsbEscposInterface(vendorId, productId)
+  const iface = buildInterface(settings)
+  const dryRun = iface instanceof DryRunInterface
 
   const printer = new ThermalPrinter({
     type: PrinterTypes.EPSON,
@@ -175,19 +249,21 @@ function createPrinterSession(settings: Settings): PrinterSession {
 }
 
 /**
- * Turns a raw libusb/WebUSB error into an actionable message, since "LIBUSB_ERROR_ACCESS" or
- * "LIBUSB_ERROR_NOT_SUPPORTED" means nothing to whoever is standing at the till. The exact
- * wording of these errors isn't standardized across platforms, so this matches loosely on
- * well-known substrings rather than specific error codes.
+ * Turns a raw libusb/WebUSB/serial-port error into an actionable message, since
+ * "LIBUSB_ERROR_ACCESS" or "Error: Opening COM3: Access denied" means nothing to whoever is
+ * standing at the till. The exact wording of these errors isn't standardized across platforms
+ * or transports, so this matches loosely on well-known substrings rather than specific codes.
  */
-function describeUsbError(err: unknown): string {
+function describePrinterError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err)
+  const isSerialPath = /tty|COM\d/i.test(message)
 
   if (process.platform === 'linux' && /ACCESS|EACCES|permission/i.test(message)) {
-    return (
-      `${message} — Vermutlich fehlt die USB-Berechtigung unter Linux. Siehe README, ` +
-      `Abschnitt "Bondrucker per USB anschließen und einrichten" (udev-Regel für Linux).`
-    )
+    return isSerialPath
+      ? `${message} — Vermutlich fehlt die Berechtigung für die serielle Schnittstelle unter ` +
+          `Linux. Siehe README, Abschnitt "Serieller Drucker" (dialout-Gruppe für Linux).`
+      : `${message} — Vermutlich fehlt die USB-Berechtigung unter Linux. Siehe README, ` +
+          `Abschnitt "Bondrucker per USB anschließen und einrichten" (udev-Regel für Linux).`
   }
 
   if (
@@ -198,6 +274,13 @@ function describeUsbError(err: unknown): string {
       `${message} — Unter Windows braucht der Drucker den WinUSB-Treiber statt seines ` +
       `Standardtreibers. Siehe README, Abschnitt "Bondrucker per USB anschließen und ` +
       `einrichten" (Zadig/WinUSB für Windows).`
+    )
+  }
+
+  if (/cannot open|no such file|file not found/i.test(message)) {
+    return (
+      `${message} — Die serielle Schnittstelle/der Drucker wurde nicht gefunden. Kabel/Adapter ` +
+      `geprüft? In den Einstellungen erneut nach Geräten suchen.`
     )
   }
 
@@ -213,7 +296,7 @@ async function runJob(session: PrinterSession, kind: PrintJobItem['kind']): Prom
     await session.printer.execute()
     return { kind, ok: true }
   } catch (err) {
-    const message = describeUsbError(err)
+    const message = describePrinterError(err)
     console.error(`[Kassensystem] Druckfehler (${kind}): ${message}\nVorschau:\n${preview}`)
     return { kind, ok: false, error: message }
   }
@@ -385,6 +468,16 @@ async function withOpenDevice(device: UsbDeviceHandle, fn: () => void): Promise<
   } finally {
     await device.close()
   }
+}
+
+export async function listSerialPorts(): Promise<SerialPortInfo[]> {
+  const ports = await SerialPort.list()
+  return ports.map((p) => ({
+    path: p.path,
+    manufacturer: p.manufacturer,
+    vendorId: p.vendorId,
+    productId: p.productId
+  }))
 }
 
 export async function printTestPage(settings: Settings): Promise<PrintResult> {

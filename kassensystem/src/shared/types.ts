@@ -64,6 +64,8 @@ export interface CreateSaleResult {
   printResult: PrintResult
 }
 
+export type PrinterConnection = 'usb' | 'serial' | ''
+
 export interface Settings {
   titleLine1: string
   titleLine2: string
@@ -74,8 +76,12 @@ export interface Settings {
   registerNumber: number
   taxRateA: number
   taxRateB: number
+  /** Which of the configurations below is actually active; '' falls back to Dry-Run. */
+  printerConnection: PrinterConnection
   printerVendorId: string
   printerProductId: string
+  printerSerialPath: string
+  printerSerialBaudRate: number
 }
 
 export interface TaxBreakdownEntry {
@@ -112,6 +118,13 @@ export interface UsbDeviceInfo {
   product?: string
 }
 
+export interface SerialPortInfo {
+  path: string
+  manufacturer?: string
+  vendorId?: string
+  productId?: string
+}
+
 export interface PrintJobItem {
   kind: 'receipt' | 'voucher' | 'journal'
   ok: boolean
@@ -138,6 +151,7 @@ export interface KassenApi {
   }
   printer: {
     listDevices(): Promise<UsbDeviceInfo[]>
+    listSerialPorts(): Promise<SerialPortInfo[]>
     testPrint(): Promise<PrintResult>
   }
   settings: {

@@ -375,6 +375,32 @@
   margin-top: 0;
 }
 
+.settings-section h3 {
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.printer-status {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.printer-baud-rate {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.printer-baud-rate input {
+  width: 6rem;
+}
+
 .settings-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

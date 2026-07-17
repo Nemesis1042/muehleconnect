@@ -72,8 +72,13 @@ const DEFAULT_SETTINGS: Settings = {
   registerNumber: 1,
   taxRateA: 7,
   taxRateB: 19,
+  printerConnection: '',
   printerVendorId: '',
-  printerProductId: ''
+  printerProductId: '',
+  printerSerialPath: '',
+  // Vorbelegt mit dem am Kassen-Laptop bestätigten Wert; der ESC/POS-Standard wäre 9600, aber
+  // nicht jeder Drucker hält sich daran (Feld bleibt frei änderbar).
+  printerSerialBaudRate: 19200
 }
 
 const COUNTER_RECEIPT = 'counter_receipt_number'
