@@ -77,10 +77,16 @@ chmod +x "dist/Kassensystem Dobelmühle-x.x.x.AppImage"
 *Alternative für einen schnellen ersten Test ohne Installer (beide Systeme):* `npm run dev`
 startet die App direkt aus dem Projektordner heraus.
 
-### 4. Bondrucker per USB anschließen und einrichten
+### 4. Bondrucker anschließen und einrichten
 
-Die App spricht den USB-Bondrucker **direkt per ESC/POS** an (kein normaler Druckertreiber
-nötig). Wie der Zugriff freigeschaltet wird, unterscheidet sich je nach Betriebssystem:
+Die App spricht den Bondrucker **direkt per ESC/POS** an (kein normaler Druckertreiber nötig) —
+entweder über eine **native USB**-Schnittstelle oder, falls der Drucker (bzw. sein
+USB-zu-Seriell-Adapter, z.B. ein FTDI-Chip) sich als serieller Anschluss meldet, über eine
+**serielle** Verbindung. Beide Wege sind in den Einstellungen wählbar.
+
+#### USB-Drucker
+
+Wie der Zugriff freigeschaltet wird, unterscheidet sich je nach Betriebssystem:
 
 **Windows** — der Drucker muss mit dem **WinUSB**-Treiber statt seines Standardtreibers laufen:
 
@@ -107,12 +113,41 @@ das USB-Gerät (sonst meldet die App beim Drucken einen Berechtigungsfehler):
 4. Eigenen Nutzer zur Gruppe `plugdev` hinzufügen (falls nicht schon Mitglied) und danach einmal
    ab-/anmelden: `sudo usermod -aG plugdev $USER`
 
-**Beide Systeme:** In der Kassensystem-App unter "Einstellungen" → "USB-Geräte suchen" klicken,
-den Drucker aus der Liste auswählen und mit "Testdruck" prüfen, ob ein Bon herauskommt.
+In der Kassensystem-App unter "Einstellungen" → "USB-Geräte suchen" klicken, den Drucker aus der
+Liste auswählen und mit "Testdruck" prüfen, ob ein Bon herauskommt.
 
-Ohne ausgewählten Drucker läuft die App im **Dry-Run-Modus**: Bons werden nicht gedruckt, sondern
-nur als Text protokolliert — praktisch, um die App schon mal ohne angeschlossenen Drucker
-auszuprobieren.
+#### Serieller Drucker (USB-zu-Seriell-Adapter, z.B. FTDI)
+
+Manche Bondrucker sind intern seriell (RS-232) und werden über einen USB-zu-Seriell-Adapter
+angeschlossen — der Laptop sieht dann keinen "USB-Drucker", sondern einen COM-Port bzw. ein
+`tty`-Gerät. Erkennbar z.B. an `lsusb` mit einem Eintrag wie `FTDI FT232 Serial (UART) IC` statt
+eines Druckerherstellers.
+
+**Linux:**
+
+1. Adapter/Drucker anschließen, dann den Gerätepfad ermitteln: `dmesg | grep tty` (nach dem
+   Einstecken) oder `ls /dev/ttyUSB*` — meist `/dev/ttyUSB0`.
+2. Eigenen Nutzer zur Gruppe `dialout` hinzufügen (**andere Gruppe** als beim USB-Drucker oben!)
+   und danach einmal ab-/anmelden:
+   ```bash
+   sudo usermod -aG dialout $USER
+   ```
+
+**Windows:**
+
+1. Adapter/Drucker anschließen, dann im Geräte-Manager unter "Anschlüsse (COM & LPT)" den
+   COM-Port ablesen (z.B. `COM3`).
+
+**Beide Systeme:** In der Kassensystem-App unter "Einstellungen" im Abschnitt "Seriell" auf
+"Serielle Anschlüsse suchen" klicken, den Port auswählen und die **Baudrate** prüfen — Standard
+ist 9600, viele Drucker weichen aber davon ab (bei einem bereits im Einsatz getesteten Gerät waren
+es z.B. 19200). Steht die Baudrate nicht auf dem Typenschild/im Handbuch oder an DIP-Schaltern am
+Gerät, hilft Ausprobieren: mit "Testdruck" prüfen, ob lesbarer Text herauskommt (falsche Baudrate
+liefert entweder gar nichts oder Zeichenmüll).
+
+**Beide Anbindungsarten:** Ohne ausgewählten Drucker (weder USB noch seriell) läuft die App im
+**Dry-Run-Modus**: Bons werden nicht gedruckt, sondern nur als Text protokolliert — praktisch, um
+die App schon mal ohne angeschlossenen Drucker auszuprobieren.
 
 ### 5. Erste Produkte anlegen
 
@@ -134,7 +169,7 @@ npm run typecheck    # nur TypeScript prüfen
 npm test             # Vitest: Warenkorb-/Steuer-/Verkaufslogik
 ```
 
-`better-sqlite3` und `usb` sind native Module und müssen zur jeweils passenden Node-Version
+`better-sqlite3`, `usb` und `serialport` sind native Module und müssen zur jeweils passenden Node-Version
 kompiliert sein: `npm run dev`/`start`/`dist:*` laufen in **Electrons** Node, `npm test` läuft in
 **deinem normalen** Node — zwei verschiedene ABIs. Deshalb bauen `predev`/`pretest`/`predist:*`
 (automatisch vor dem jeweiligen Skript) die native Module passend neu. Das kostet ein paar

@@ -10,7 +10,13 @@ import {
 import { createSale, getSale } from './sales'
 import { getSettings, updateSettings } from './settings'
 import { getJournal } from './journal'
-import { listUsbPrinterDevices, printJournalReport, printSale, printTestPage } from './printer'
+import {
+  listSerialPorts,
+  listUsbPrinterDevices,
+  printJournalReport,
+  printSale,
+  printTestPage
+} from './printer'
 import type { CreateSaleInput, ProductInput } from '../shared/types'
 
 export function registerIpcHandlers(): void {
@@ -34,6 +40,7 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('printer:listDevices', () => listUsbPrinterDevices())
+  ipcMain.handle('printer:listSerialPorts', () => listSerialPorts())
   ipcMain.handle('printer:testPrint', () => printTestPage(getSettings()))
 
   ipcMain.handle('settings:get', () => getSettings())

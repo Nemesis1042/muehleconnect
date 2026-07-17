@@ -1,5 +1,5 @@
 import { getDb } from './db'
-import type { Settings } from '../shared/types'
+import type { PrinterConnection, Settings } from '../shared/types'
 
 export function getSettings(): Settings {
   const rows = getDb().prepare('SELECT key, value FROM settings').all() as Array<{
@@ -18,8 +18,11 @@ export function getSettings(): Settings {
     registerNumber: Number(map.registerNumber ?? 1),
     taxRateA: Number(map.taxRateA ?? 7),
     taxRateB: Number(map.taxRateB ?? 19),
+    printerConnection: (map.printerConnection ?? '') as PrinterConnection,
     printerVendorId: map.printerVendorId ?? '',
-    printerProductId: map.printerProductId ?? ''
+    printerProductId: map.printerProductId ?? '',
+    printerSerialPath: map.printerSerialPath ?? '',
+    printerSerialBaudRate: Number(map.printerSerialBaudRate ?? 19200)
   }
 }
 

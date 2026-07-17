@@ -8,22 +8,23 @@
   "type": "commonjs",
   "scripts": {
     "dev": "electron-vite dev",
-    "predev": "electron-rebuild -f -w better-sqlite3,usb",
+    "predev": "electron-rebuild -f -w better-sqlite3,usb,serialport",
     "build": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json && electron-vite build",
     "start": "electron-vite preview",
-    "prestart": "electron-rebuild -f -w better-sqlite3,usb",
+    "prestart": "electron-rebuild -f -w better-sqlite3,usb,serialport",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
-    "pretest": "npm rebuild better-sqlite3 usb",
+    "pretest": "npm rebuild better-sqlite3 usb serialport",
     "rebuild": "electron-rebuild",
     "dist:win": "npm run build && electron-builder --win",
-    "predist:win": "electron-rebuild -f -w better-sqlite3,usb",
+    "predist:win": "electron-rebuild -f -w better-sqlite3,usb,serialport",
     "dist:linux": "npm run build && electron-builder --linux",
-    "predist:linux": "electron-rebuild -f -w better-sqlite3,usb"
+    "predist:linux": "electron-rebuild -f -w better-sqlite3,usb,serialport"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
     "node-thermal-printer": "^4.6.0",
+    "serialport": "^13.0.0",
     "usb": "^3.0.1"
   },
   "devDependencies": {

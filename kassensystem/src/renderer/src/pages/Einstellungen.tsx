@@ -1,35 +1,50 @@
 import { useEffect, useState } from 'react'
-import type { Settings, UsbDeviceInfo } from '@shared/types'
+import type { Settings, SerialPortInfo, UsbDeviceInfo } from '@shared/types'
 
 function platformHint(): string | null {
   const ua = navigator.userAgent
   if (ua.includes('Windows')) {
     return (
-      'Windows erkannt: Falls der Drucker unten nicht auftaucht oder der Testdruck fehlschlägt, ' +
-      'muss er meist erst per Zadig auf den WinUSB-Treiber umgestellt werden (siehe README, ' +
-      'Abschnitt "Bondrucker per USB anschließen und einrichten").'
+      'Windows erkannt: Für einen USB-Drucker muss er meist erst per Zadig auf den ' +
+      'WinUSB-Treiber umgestellt werden; ein serieller Drucker läuft über den im ' +
+      'Geräte-Manager sichtbaren COM-Port. Siehe README, Abschnitt "Bondrucker per USB ' +
+      'anschließen und einrichten" bzw. "Serieller Drucker".'
     )
   }
   if (ua.includes('Linux')) {
     return (
-      'Linux erkannt: Falls der Drucker unten nicht auftaucht oder der Testdruck mit einem ' +
-      'Berechtigungsfehler abbricht, fehlt meist eine udev-Regel für den normalen Nutzer ' +
-      '(siehe README, Abschnitt "Bondrucker per USB anschließen und einrichten").'
+      'Linux erkannt: Bricht der Testdruck mit einem Berechtigungsfehler ab, fehlt meist eine ' +
+      'udev-Regel (USB-Drucker, Gruppe plugdev) bzw. die dialout-Gruppenmitgliedschaft ' +
+      '(serieller Drucker). Siehe README, Abschnitt "Bondrucker per USB anschließen und ' +
+      'einrichten" bzw. "Serieller Drucker".'
     )
   }
   return null
 }
 
+function connectionStatus(settings: Settings): string {
+  if (settings.printerConnection === 'usb') {
+    return `Aktiv: USB-Drucker (VID ${settings.printerVendorId} / PID ${settings.printerProductId})`
+  }
+  if (settings.printerConnection === 'serial') {
+    return `Aktiv: Seriell ${settings.printerSerialPath} @ ${settings.printerSerialBaudRate} Baud`
+  }
+  return 'Aktiv: kein Drucker (Dry-Run-Modus)'
+}
+
 export default function Einstellungen(): JSX.Element {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [devices, setDevices] = useState<UsbDeviceInfo[]>([])
+  const [serialPorts, setSerialPorts] = useState<SerialPortInfo[]>([])
   const [scanning, setScanning] = useState(false)
+  const [scanningSerial, setScanningSerial] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     void window.kassen.settings.get().then(setSettings)
     void scanDevices()
+    void scanSerialPorts()
   }, [])
 
   async function scanDevices(): Promise<void> {
@@ -38,6 +53,15 @@ export default function Einstellungen(): JSX.Element {
       setDevices(await window.kassen.printer.listDevices())
     } finally {
       setScanning(false)
+    }
+  }
+
+  async function scanSerialPorts(): Promise<void> {
+    setScanningSerial(true)
+    try {
+      setSerialPorts(await window.kassen.printer.listSerialPorts())
+    } finally {
+      setScanningSerial(false)
     }
   }
 
@@ -138,8 +162,11 @@ export default function Einstellungen(): JSX.Element {
       </section>
 
       <section className="settings-section">
-        <h2>Bondrucker (USB)</h2>
+        <h2>Bondrucker</h2>
+        <p className="printer-status">{connectionStatus(settings)}</p>
         {platformHint() && <p className="printer-platform-hint">{platformHint()}</p>}
+
+        <h3>USB</h3>
         <button className="button-secondary" onClick={() => void scanDevices()} disabled={scanning}>
           {scanning ? 'Suche…' : 'USB-Geräte suchen'}
         </button>
@@ -147,7 +174,9 @@ export default function Einstellungen(): JSX.Element {
           {devices.length === 0 && <p>Keine USB-Geräte gefunden.</p>}
           {devices.map((d) => {
             const selected =
-              settings.printerVendorId === d.vendorIdHex && settings.printerProductId === d.productIdHex
+              settings.printerConnection === 'usb' &&
+              settings.printerVendorId === d.vendorIdHex &&
+              settings.printerProductId === d.productIdHex
             return (
               <div key={`${d.vendorIdHex}-${d.productIdHex}`} className={`printer-device${selected ? ' selected' : ''}`}>
                 <div className="printer-device-info">
@@ -163,6 +192,7 @@ export default function Einstellungen(): JSX.Element {
                 <button
                   className="button-secondary"
                   onClick={() => {
+                    update('printerConnection', 'usb')
                     update('printerVendorId', d.vendorIdHex)
                     update('printerProductId', d.productIdHex)
                   }}
@@ -173,11 +203,56 @@ export default function Einstellungen(): JSX.Element {
             )
           })}
         </div>
+
+        <h3>Seriell (COM/tty, z.B. USB-zu-Seriell-Adapter)</h3>
+        <label className="printer-baud-rate">
+          Baudrate
+          <input
+            type="number"
+            value={settings.printerSerialBaudRate}
+            onChange={(e) => update('printerSerialBaudRate', Number(e.target.value))}
+          />
+        </label>
+        <button
+          className="button-secondary"
+          onClick={() => void scanSerialPorts()}
+          disabled={scanningSerial}
+        >
+          {scanningSerial ? 'Suche…' : 'Serielle Anschlüsse suchen'}
+        </button>
+        <div className="printer-device-list">
+          {serialPorts.length === 0 && <p>Keine seriellen Anschlüsse gefunden.</p>}
+          {serialPorts.map((p) => {
+            const selected =
+              settings.printerConnection === 'serial' && settings.printerSerialPath === p.path
+            return (
+              <div key={p.path} className={`printer-device${selected ? ' selected' : ''}`}>
+                <div className="printer-device-info">
+                  <div>{p.manufacturer ?? p.path}</div>
+                  <div className="printer-device-id">
+                    {p.path}
+                    {p.vendorId ? ` – VID 0x${p.vendorId} / PID 0x${p.productId}` : ''}
+                  </div>
+                </div>
+                <button
+                  className="button-secondary"
+                  onClick={() => {
+                    update('printerConnection', 'serial')
+                    update('printerSerialPath', p.path)
+                  }}
+                >
+                  {selected ? 'Ausgewählt' : 'Auswählen'}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
         <button className="button-secondary" onClick={() => void handleTestPrint()}>
           Testdruck
         </button>
         {testResult && <p>{testResult}</p>}
-        {!settings.printerVendorId && (
+        {settings.printerConnection === '' && (
           <p className="cart-line-deposit">
             Kein Drucker ausgewählt – es wird im Dry-Run-Modus gedruckt (Vorschau nur in der
             Konsole, kein echter Ausdruck).

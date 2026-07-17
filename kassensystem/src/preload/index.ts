@@ -22,6 +22,7 @@ const api: KassenApi = {
   },
   printer: {
     listDevices: () => ipcRenderer.invoke('printer:listDevices'),
+    listSerialPorts: () => ipcRenderer.invoke('printer:listSerialPorts'),
     testPrint: () => ipcRenderer.invoke('printer:testPrint')
   },
   settings: {
