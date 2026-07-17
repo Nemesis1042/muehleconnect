@@ -294,16 +294,22 @@ function fillJournal(printer: ThermalPrinter, report: JournalReport): void {
   printer.cut()
 }
 
+// USB Hub class - never relevant to pick as a printer, filtered out purely to reduce noise.
+const USB_HUB_CLASS = 9
+
 export async function listUsbPrinterDevices(): Promise<UsbDeviceInfo[]> {
   const devices = await getUsbDevices()
   const result: UsbDeviceInfo[] = []
 
   for (const device of devices) {
     try {
-      const isPrinter = device.configurations.some((cfg) =>
-        cfg.interfaces.some((i) => i.alternate.interfaceClass === USB_PRINTER_CLASS)
+      // Many ESC/POS receipt printers report a vendor-specific interface class instead of the
+      // standard USB Printer Class (7), so we can't reliably filter to "real" printers here -
+      // list everything except hubs and let the user pick their printer by name in Einstellungen.
+      const isHub = device.configurations.some((cfg) =>
+        cfg.interfaces.some((i) => i.alternate.interfaceClass === USB_HUB_CLASS)
       )
-      if (!isPrinter) continue
+      if (isHub) continue
 
       let manufacturer = device.manufacturerName ?? undefined
       let product = device.productName ?? undefined
