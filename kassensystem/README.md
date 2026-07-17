@@ -14,14 +14,25 @@ Diese Schritte einmalig auf dem Laptop durchführen, der später an der Kasse st
 
 ### 1. Node.js installieren
 
-Falls noch nicht vorhanden: [nodejs.org](https://nodejs.org/) öffnen, die **LTS-Version**
-herunterladen und installieren (Windows: einfach dem Installer-Assistenten folgen). Danach in
-einer Eingabeaufforderung/PowerShell prüfen, ob es funktioniert hat:
+Benötigt wird **Node.js 20 oder neuer** (die aktuelle LTS-Version reicht). Falls schon ein älteres
+Node installiert ist (z. B. Node 18), muss es zuerst aktualisiert werden — ältere Versionen
+funktionieren nicht zuverlässig, siehe Hinweis unten.
+
+[nodejs.org](https://nodejs.org/) öffnen, die **LTS-Version** herunterladen und installieren
+(Windows: einfach dem Installer-Assistenten folgen, er ersetzt eine vorhandene ältere Version).
+Danach Terminal/PowerShell einmal schließen und neu öffnen, und prüfen, ob es geklappt hat:
 
 ```bash
 node -v
 npm -v
 ```
+
+`node -v` sollte `v20.x`, `v22.x` oder neuer anzeigen.
+
+> **Warnung `npm WARN EBADENGINE ... required: { node: '20.x || 22.x ...' }` beim `npm install`?**
+> Das bedeutet, die installierte Node-Version ist zu alt für `better-sqlite3`. Node wie oben
+> beschrieben aktualisieren, dann im `kassensystem`-Ordner den alten `node_modules`-Ordner löschen
+> und `npm install` erneut ausführen.
 
 Beide Befehle sollten eine Versionsnummer ausgeben.
 
