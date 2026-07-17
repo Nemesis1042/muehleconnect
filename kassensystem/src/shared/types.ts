@@ -55,6 +55,8 @@ export interface SaleRecord {
 export interface CreateSaleInput {
   lines: CartInputLine[]
   cashReceivedCents: number
+  /** Wertbons werden immer gedruckt; der kombinierte Kassenzettel ist pro Verkauf optional. */
+  printReceipt: boolean
 }
 
 export interface CreateSaleResult {
