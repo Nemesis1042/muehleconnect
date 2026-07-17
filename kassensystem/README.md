@@ -134,6 +134,13 @@ npm run typecheck    # nur TypeScript prüfen
 npm test             # Vitest: Warenkorb-/Steuer-/Verkaufslogik
 ```
 
+`better-sqlite3` und `usb` sind native Module und müssen zur jeweils passenden Node-Version
+kompiliert sein: `npm run dev`/`start`/`dist:*` laufen in **Electrons** Node, `npm test` läuft in
+**deinem normalen** Node — zwei verschiedene ABIs. Deshalb bauen `predev`/`pretest`/`predist:*`
+(automatisch vor dem jeweiligen Skript) die native Module passend neu. Das kostet ein paar
+Sekunden bei jedem Wechsel zwischen `npm run dev` und `npm test`, verhindert aber Fehler wie
+`NODE_MODULE_VERSION ... requires ...` oder `Module did not self-register`.
+
 ## Build & Installer
 
 ```bash

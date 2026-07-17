@@ -8,13 +8,18 @@
   "type": "commonjs",
   "scripts": {
     "dev": "electron-vite dev",
+    "predev": "electron-rebuild -f -w better-sqlite3,usb",
     "build": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json && electron-vite build",
     "start": "electron-vite preview",
+    "prestart": "electron-rebuild -f -w better-sqlite3,usb",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
+    "pretest": "npm rebuild better-sqlite3 usb",
     "rebuild": "electron-rebuild",
     "dist:win": "npm run build && electron-builder --win",
-    "dist:linux": "npm run build && electron-builder --linux"
+    "predist:win": "electron-rebuild -f -w better-sqlite3,usb",
+    "dist:linux": "npm run build && electron-builder --linux",
+    "predist:linux": "electron-rebuild -f -w better-sqlite3,usb"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
