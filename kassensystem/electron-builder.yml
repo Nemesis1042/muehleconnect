@@ -1,0 +1,22 @@
+appId: de.dobelmuehle.kassensystem
+productName: Kassensystem Dobelmühle
+directories:
+  buildResources: resources
+  output: dist
+files:
+  - out/**/*
+  - package.json
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+linux:
+  target:
+    - AppImage
+mac:
+  target:
+    - dmg
