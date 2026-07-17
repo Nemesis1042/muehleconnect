@@ -10,6 +10,8 @@
   --color-border: #e2ddd3;
   --color-danger: #c0392b;
   --color-success: #2e7d46;
+  --color-primary-tint: #eaf1f7;
+  --color-accent-tint: #fdf0e2;
   --radius: 10px;
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
@@ -39,6 +41,27 @@ body {
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin: 0 0 1.25rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin: 0 0 1rem;
+  padding-left: 0.7rem;
+  border-left: 4px solid var(--color-accent);
+}
+
+label {
+  font-weight: 600;
+  color: var(--color-text-muted);
 }
 
 .button-primary {
@@ -89,6 +112,7 @@ button {
 
 .card {
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }

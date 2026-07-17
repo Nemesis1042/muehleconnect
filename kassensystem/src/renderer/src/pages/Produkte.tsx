@@ -108,6 +108,16 @@ export default function Produkte(): JSX.Element {
       </div>
 
       <table className="produkte-table">
+        <colgroup>
+          <col style={{ width: '9%' }} />
+          <col style={{ width: '26%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '14%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '10%' }} />
+          <col style={{ width: '8%' }} />
+          <col style={{ width: '15%' }} />
+        </colgroup>
         <thead>
           <tr>
             <th></th>
