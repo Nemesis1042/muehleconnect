@@ -5,7 +5,7 @@ interface Props {
   totalCents: number
   submitting: boolean
   error?: string | null
-  onConfirm: (cashReceivedCents: number) => void
+  onConfirm: (cashReceivedCents: number, printReceipt: boolean) => void
   onCancel: () => void
 }
 
@@ -19,6 +19,7 @@ export default function CashKeypad({
   onCancel
 }: Props): JSX.Element {
   const [input, setInput] = useState('')
+  const [printReceipt, setPrintReceipt] = useState(true)
 
   const receivedCents = input === '' ? 0 : Number(input)
   const change = receivedCents - totalCents
@@ -71,13 +72,22 @@ export default function CashKeypad({
           </button>
         </div>
 
+        <label className="print-receipt-toggle">
+          <input
+            type="checkbox"
+            checked={printReceipt}
+            onChange={(e) => setPrintReceipt(e.target.checked)}
+          />
+          Kassenzettel drucken
+        </label>
+
         <div className="modal-actions">
           <button className="button-secondary" onClick={onCancel} disabled={submitting}>
             Abbrechen
           </button>
           <button
             className="button-primary"
-            onClick={() => onConfirm(receivedCents)}
+            onClick={() => onConfirm(receivedCents, printReceipt)}
             disabled={!canConfirm}
           >
             {submitting ? 'Wird gedruckt…' : 'Bestätigen'}

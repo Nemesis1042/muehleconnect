@@ -234,6 +234,14 @@
   flex: 1;
 }
 
+.print-receipt-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-text-muted);
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

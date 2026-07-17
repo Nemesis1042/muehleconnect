@@ -353,12 +353,18 @@ export async function printTestPage(settings: Settings): Promise<PrintResult> {
   return { ok: job.ok, jobs: [job] }
 }
 
-export async function printSale(sale: SaleRecord, settings: Settings): Promise<PrintResult> {
+export async function printSale(
+  sale: SaleRecord,
+  settings: Settings,
+  options: { printReceipt?: boolean } = {}
+): Promise<PrintResult> {
   const jobs: PrintJobItem[] = []
 
-  const receiptSession = createPrinterSession(settings)
-  fillReceipt(receiptSession.printer, settings, sale)
-  jobs.push(await runJob(receiptSession, 'receipt'))
+  if (options.printReceipt !== false) {
+    const receiptSession = createPrinterSession(settings)
+    fillReceipt(receiptSession.printer, settings, sale)
+    jobs.push(await runJob(receiptSession, 'receipt'))
+  }
 
   for (const item of sale.items) {
     for (let i = 0; i < item.quantity; i++) {

@@ -71,11 +71,15 @@ export default function Kasse(): JSX.Element {
     })
   }
 
-  async function confirmPayment(cashReceivedCents: number): Promise<void> {
+  async function confirmPayment(cashReceivedCents: number, printReceipt: boolean): Promise<void> {
     setSubmitting(true)
     setError(null)
     try {
-      const result = await window.kassen.sale.create({ lines: cartInputLines, cashReceivedCents })
+      const result = await window.kassen.sale.create({
+        lines: cartInputLines,
+        cashReceivedCents,
+        printReceipt
+      })
       setLastSaleId(result.sale.id)
       setLastPrintResult(result.printResult)
       setRawCart({})
@@ -144,7 +148,7 @@ export default function Kasse(): JSX.Element {
           totalCents={totalCents}
           submitting={submitting}
           error={error}
-          onConfirm={(cash) => void confirmPayment(cash)}
+          onConfirm={(cash, printReceipt) => void confirmPayment(cash, printReceipt)}
           onCancel={() => setCheckoutOpen(false)}
         />
       )}

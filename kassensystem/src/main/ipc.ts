@@ -25,7 +25,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('sale:create', async (_e, input: CreateSaleInput) => {
     const sale = createSale(input)
-    const printResult = await printSale(sale, getSettings())
+    const printResult = await printSale(sale, getSettings(), { printReceipt: input.printReceipt })
     return { sale, printResult }
   })
   ipcMain.handle('sale:reprint', async (_e, saleId: number) => {
