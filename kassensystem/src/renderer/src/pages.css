@@ -389,6 +389,15 @@
   color: var(--color-text-muted);
 }
 
+.printer-platform-hint {
+  background: var(--color-primary-tint);
+  color: var(--color-primary-dark);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.9rem;
+  margin: 0.75rem 0;
+}
+
 .printer-device-list {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,25 @@
 import { useEffect, useState } from 'react'
 import type { Settings, UsbDeviceInfo } from '@shared/types'
 
+function platformHint(): string | null {
+  const ua = navigator.userAgent
+  if (ua.includes('Windows')) {
+    return (
+      'Windows erkannt: Falls der Drucker unten nicht auftaucht oder der Testdruck fehlschlägt, ' +
+      'muss er meist erst per Zadig auf den WinUSB-Treiber umgestellt werden (siehe README, ' +
+      'Abschnitt "Bondrucker per USB anschließen und einrichten").'
+    )
+  }
+  if (ua.includes('Linux')) {
+    return (
+      'Linux erkannt: Falls der Drucker unten nicht auftaucht oder der Testdruck mit einem ' +
+      'Berechtigungsfehler abbricht, fehlt meist eine udev-Regel für den normalen Nutzer ' +
+      '(siehe README, Abschnitt "Bondrucker per USB anschließen und einrichten").'
+    )
+  }
+  return null
+}
+
 export default function Einstellungen(): JSX.Element {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [devices, setDevices] = useState<UsbDeviceInfo[]>([])
@@ -120,18 +139,23 @@ export default function Einstellungen(): JSX.Element {
 
       <section className="settings-section">
         <h2>Bondrucker (USB)</h2>
+        {platformHint() && <p className="printer-platform-hint">{platformHint()}</p>}
         <button className="button-secondary" onClick={() => void scanDevices()} disabled={scanning}>
           {scanning ? 'Suche…' : 'USB-Geräte suchen'}
         </button>
         <div className="printer-device-list">
-          {devices.length === 0 && <p>Keine USB-Drucker gefunden.</p>}
+          {devices.length === 0 && <p>Keine USB-Geräte gefunden.</p>}
           {devices.map((d) => {
             const selected =
               settings.printerVendorId === d.vendorIdHex && settings.printerProductId === d.productIdHex
             return (
               <div key={`${d.vendorIdHex}-${d.productIdHex}`} className={`printer-device${selected ? ' selected' : ''}`}>
                 <div className="printer-device-info">
-                  <div>{d.manufacturer ?? 'Unbekannter Hersteller'} – {d.product ?? 'USB-Drucker'}</div>
+                  <div>
+                    {d.manufacturer || d.product
+                      ? `${d.manufacturer ?? 'Unbekannter Hersteller'} – ${d.product ?? 'USB-Gerät'}`
+                      : 'Name nicht lesbar (Treiber/Berechtigung?)'}
+                  </div>
                   <div className="printer-device-id">
                     VID {d.vendorIdHex} / PID {d.productIdHex}
                   </div>
