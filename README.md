@@ -54,5 +54,6 @@ für die Kassenabrechnung nach dem Fest.
 
 ## Technisches Setup
 
-Installation, Drucker-Einrichtung (USB/WinUSB), Build und Tests sind in
-[`kassensystem/README.md`](kassensystem/README.md) beschrieben.
+Eine Schritt-für-Schritt-Anleitung zur Erstinstallation auf dem Kassen-Laptop (Node.js,
+Installer bauen, Bondrucker per WinUSB einrichten) sowie Hinweise für Entwicklung, Build und
+Tests stehen in [`kassensystem/README.md`](kassensystem/README.md).
