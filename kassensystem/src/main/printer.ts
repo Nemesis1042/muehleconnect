@@ -479,12 +479,22 @@ async function withOpenDevice(device: UsbDeviceHandle, fn: () => void): Promise<
 
 export async function listSerialPorts(): Promise<SerialPortInfo[]> {
   const ports = await SerialPort.list()
-  return ports.map((p) => ({
+  const infos = ports.map((p) => ({
     path: p.path,
     manufacturer: p.manufacturer,
     vendorId: p.vendorId,
     productId: p.productId
   }))
+
+  // Linux exposes ~32 legacy /dev/ttyS0-31 "ports" on nearly every x86 machine regardless of
+  // whether any hardware is behind them; they never have manufacturer/vendorId info, unlike a
+  // real USB-to-serial adapter. Sort those recognized ones first instead of filtering, so a
+  // genuine (if unusual) /dev/ttyS0 printer stays selectable without burying it in noise.
+  const isRecognized = (p: SerialPortInfo): boolean => Boolean(p.manufacturer || p.vendorId)
+  return infos.sort((a, b) => {
+    const recognizedDiff = Number(isRecognized(b)) - Number(isRecognized(a))
+    return recognizedDiff !== 0 ? recognizedDiff : a.path.localeCompare(b.path)
+  })
 }
 
 export async function printTestPage(settings: Settings): Promise<PrintResult> {
