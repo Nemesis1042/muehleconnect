@@ -174,6 +174,36 @@ function createPrinterSession(settings: Settings): PrinterSession {
   return { printer, dryRun }
 }
 
+/**
+ * Turns a raw libusb/WebUSB error into an actionable message, since "LIBUSB_ERROR_ACCESS" or
+ * "LIBUSB_ERROR_NOT_SUPPORTED" means nothing to whoever is standing at the till. The exact
+ * wording of these errors isn't standardized across platforms, so this matches loosely on
+ * well-known substrings rather than specific error codes.
+ */
+function describeUsbError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err)
+
+  if (process.platform === 'linux' && /ACCESS|EACCES|permission/i.test(message)) {
+    return (
+      `${message} — Vermutlich fehlt die USB-Berechtigung unter Linux. Siehe README, ` +
+      `Abschnitt "Bondrucker per USB anschließen und einrichten" (udev-Regel für Linux).`
+    )
+  }
+
+  if (
+    process.platform === 'win32' &&
+    /NOT_SUPPORTED|NOT_FOUND|no backend|driver/i.test(message)
+  ) {
+    return (
+      `${message} — Unter Windows braucht der Drucker den WinUSB-Treiber statt seines ` +
+      `Standardtreibers. Siehe README, Abschnitt "Bondrucker per USB anschließen und ` +
+      `einrichten" (Zadig/WinUSB für Windows).`
+    )
+  }
+
+  return message
+}
+
 async function runJob(session: PrinterSession, kind: PrintJobItem['kind']): Promise<PrintJobItem> {
   const preview = session.printer.getText()
   if (session.dryRun) {
@@ -183,7 +213,7 @@ async function runJob(session: PrinterSession, kind: PrintJobItem['kind']): Prom
     await session.printer.execute()
     return { kind, ok: true }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+    const message = describeUsbError(err)
     console.error(`[Kassensystem] Druckfehler (${kind}): ${message}\nVorschau:\n${preview}`)
     return { kind, ok: false, error: message }
   }
@@ -302,35 +332,47 @@ export async function listUsbPrinterDevices(): Promise<UsbDeviceInfo[]> {
   const result: UsbDeviceInfo[] = []
 
   for (const device of devices) {
+    // Many ESC/POS receipt printers report a vendor-specific interface class instead of the
+    // standard USB Printer Class (7), so we can't reliably filter to "real" printers here - list
+    // everything except hubs and let the user pick their printer by name in Einstellungen.
+    //
+    // Reading configuration/string descriptors can fail entirely on a device that isn't bound to
+    // a WinUSB-style driver yet (the common case on Windows before running Zadig). Each step below
+    // is guarded on its own so such a device still shows up (with just its VID/PID) instead of
+    // silently vanishing from the list - which is what made "kein Drucker gefunden" so confusing.
+    let isHub = false
     try {
-      // Many ESC/POS receipt printers report a vendor-specific interface class instead of the
-      // standard USB Printer Class (7), so we can't reliably filter to "real" printers here -
-      // list everything except hubs and let the user pick their printer by name in Einstellungen.
-      const isHub = device.configurations.some((cfg) =>
+      isHub = device.configurations.some((cfg) =>
         cfg.interfaces.some((i) => i.alternate.interfaceClass === USB_HUB_CLASS)
       )
-      if (isHub) continue
+    } catch {
+      // Deskriptoren nicht lesbar - Gerät sicherheitshalber trotzdem anzeigen statt zu verstecken.
+    }
+    if (isHub) continue
 
-      let manufacturer = device.manufacturerName ?? undefined
-      let product = device.productName ?? undefined
+    let manufacturer: string | undefined
+    let product: string | undefined
+    try {
+      manufacturer = device.manufacturerName ?? undefined
+      product = device.productName ?? undefined
       if (manufacturer === undefined && product === undefined) {
         await withOpenDevice(device, () => {
           manufacturer = device.manufacturerName ?? undefined
           product = device.productName ?? undefined
         })
       }
-
-      result.push({
-        vendorId: device.vendorId,
-        productId: device.productId,
-        vendorIdHex: toHex(device.vendorId),
-        productIdHex: toHex(device.productId),
-        manufacturer,
-        product
-      })
     } catch {
-      // Gerät nicht lesbar (z.B. fehlende Berechtigung) – überspringen
+      // Name nicht lesbar (fehlender Treiber/Berechtigung) - trotzdem mit VID/PID auflisten.
     }
+
+    result.push({
+      vendorId: device.vendorId,
+      productId: device.productId,
+      vendorIdHex: toHex(device.vendorId),
+      productIdHex: toHex(device.productId),
+      manufacturer,
+      product
+    })
   }
 
   return result
