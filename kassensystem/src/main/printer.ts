@@ -256,9 +256,16 @@ function createPrinterSession(settings: Settings): PrinterSession {
  */
 function describePrinterError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err)
+  const code = (err as NodeJS.ErrnoException | undefined)?.code
   const isSerialPath = /tty|COM\d/i.test(message)
+  // Linux' strerror() (and thus these error messages) is localized by the system's LC_MESSAGES,
+  // so "Permission denied" can just as well read "Keine Berechtigung" on a German-locale Kassen-
+  // Laptop - matching only English substrings silently misses that. `code` is the one thing on a
+  // Node error that's never localized, so it's checked first when the native module sets it.
+  const isPermissionError =
+    code === 'EACCES' || /ACCESS|EACCES|permission|berechtigung|zugriff verweigert/i.test(message)
 
-  if (process.platform === 'linux' && /ACCESS|EACCES|permission/i.test(message)) {
+  if (process.platform === 'linux' && isPermissionError) {
     return isSerialPath
       ? `${message} — Vermutlich fehlt die Berechtigung für die serielle Schnittstelle unter ` +
           `Linux. Siehe README, Abschnitt "Serieller Drucker" (dialout-Gruppe für Linux).`
