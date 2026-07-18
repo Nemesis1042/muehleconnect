@@ -24,6 +24,7 @@ function centsToEuros(cents: number): string {
 export default function Produkte(): JSX.Element {
   const [products, setProducts] = useState<Product[]>([])
   const [form, setForm] = useState<ProductInput>(emptyForm)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     void reload()
@@ -45,9 +46,15 @@ export default function Produkte(): JSX.Element {
     await reload()
   }
 
-  async function handleDelete(id: number): Promise<void> {
-    await window.kassen.products.remove(id)
-    await reload()
+  async function handleDelete(id: number, name: string): Promise<void> {
+    if (!window.confirm(`"${name}" wirklich löschen?`)) return
+    setError(null)
+    try {
+      await window.kassen.products.remove(id)
+      await reload()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
   }
 
   async function handleMove(index: number, direction: -1 | 1): Promise<void> {
@@ -65,6 +72,8 @@ export default function Produkte(): JSX.Element {
       <div className="produkte-toolbar">
         <h1>Produkte</h1>
       </div>
+
+      {error && <p className="form-error">{error}</p>}
 
       <div className="produkt-form">
         <label>
@@ -197,7 +206,7 @@ export default function Produkte(): JSX.Element {
                 />
               </td>
               <td>
-                <button className="button-secondary" onClick={() => void handleDelete(p.id)}>
+                <button className="button-secondary" onClick={() => void handleDelete(p.id, p.name)}>
                   Löschen
                 </button>
               </td>

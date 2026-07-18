@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { initDb } from '../db'
-import { createProduct } from '../products'
-import { createSale } from '../sales'
+import { createProduct, removeProduct } from '../products'
+import { createSale, voidSale } from '../sales'
 import { getJournal } from '../journal'
 
 // initDb(':memory:') never touches Electron's `app.getPath`, so this runs outside the Electron
@@ -94,6 +94,51 @@ describe('createSale', () => {
 
     expect(first.receiptNumber).toBe(1)
     expect(second.receiptNumber).toBe(2)
+  })
+})
+
+describe('voidSale', () => {
+  it('marks a sale as voided and excludes it from the journal', () => {
+    const product = createProduct({
+      name: 'Kaffee',
+      priceCents: 100,
+      category: 'Essen',
+      taxClass: 'A',
+      depositCents: 0,
+      sortOrder: 0,
+      active: true
+    })
+
+    const sale = createSale({ lines: [{ productId: product.id, quantity: 2 }], cashReceivedCents: 200 })
+    expect(sale.voided).toBe(false)
+
+    const voided = voidSale(sale.id)
+    expect(voided.voided).toBe(true)
+
+    const report = getJournal('0000-01-01 00:00:00', '9999-01-01 00:00:00')
+    expect(report.entries).toHaveLength(0)
+    expect(report.totalCents).toBe(0)
+  })
+
+  it('throws when voiding a sale that does not exist', () => {
+    expect(() => voidSale(999)).toThrow()
+  })
+})
+
+describe('removeProduct', () => {
+  it('refuses to delete a product that has already been sold', () => {
+    const product = createProduct({
+      name: 'Kaffee',
+      priceCents: 100,
+      category: 'Essen',
+      taxClass: 'A',
+      depositCents: 0,
+      sortOrder: 0,
+      active: true
+    })
+    createSale({ lines: [{ productId: product.id, quantity: 1 }], cashReceivedCents: 100 })
+
+    expect(() => removeProduct(product.id)).toThrow()
   })
 })
 

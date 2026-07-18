@@ -276,6 +276,28 @@
   flex: 1;
 }
 
+.sale-confirm-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--color-primary-tint);
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary-dark);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.sale-confirm-banner span {
+  flex: 1;
+}
+
+.sale-confirm-banner.voided {
+  background: #fdecea;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
 /* Produkte */
 
 .produkte-page {

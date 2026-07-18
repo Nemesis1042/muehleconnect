@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Product, PrintResult } from '@shared/types'
+import type { Product, PrintResult, SaleRecord } from '@shared/types'
 import { expandCart, cartTotalCents } from '@shared/cart'
+import { formatEuro } from '../format'
 import ProductGrid from '../components/ProductGrid'
 import Cart from '../components/Cart'
 import CashKeypad from '../components/CashKeypad'
@@ -13,8 +14,9 @@ export default function Kasse(): JSX.Element {
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [lastSaleId, setLastSaleId] = useState<number | null>(null)
+  const [lastSale, setLastSale] = useState<SaleRecord | null>(null)
   const [lastPrintResult, setLastPrintResult] = useState<PrintResult | null>(null)
+  const [voiding, setVoiding] = useState(false)
 
   useEffect(() => {
     void loadProducts()
@@ -80,7 +82,7 @@ export default function Kasse(): JSX.Element {
         cashReceivedCents,
         printReceipt
       })
-      setLastSaleId(result.sale.id)
+      setLastSale(result.sale)
       setLastPrintResult(result.printResult)
       setRawCart({})
       setCheckoutOpen(false)
@@ -92,18 +94,55 @@ export default function Kasse(): JSX.Element {
   }
 
   async function retryPrint(): Promise<void> {
-    if (lastSaleId === null) return
+    if (lastSale === null) return
     setSubmitting(true)
     try {
-      const result = await window.kassen.sale.reprint(lastSaleId)
+      const result = await window.kassen.sale.reprint(lastSale.id)
       setLastPrintResult(result)
     } finally {
       setSubmitting(false)
     }
   }
 
+  async function voidLastSale(): Promise<void> {
+    if (lastSale === null) return
+    const confirmed = window.confirm(
+      `Verkauf Nr. ${lastSale.receiptNumber} (${formatEuro(lastSale.totalCents)}) wirklich stornieren? ` +
+        'Bereits gedruckte Bons/Wertbons bleiben davon unberührt, der Verkauf zählt danach nicht mehr im Journal.'
+    )
+    if (!confirmed) return
+    setVoiding(true)
+    try {
+      const voided = await window.kassen.sale.void(lastSale.id)
+      setLastSale(voided)
+    } finally {
+      setVoiding(false)
+    }
+  }
+
   return (
     <div className="kasse-page">
+      {lastSale && !lastSale.voided && (
+        <div className="sale-confirm-banner">
+          <span>
+            Verkauf Nr. {lastSale.receiptNumber} über {formatEuro(lastSale.totalCents)} gespeichert.
+          </span>
+          <button className="button-secondary" onClick={() => void voidLastSale()} disabled={voiding}>
+            {voiding ? 'Storniere…' : 'Stornieren'}
+          </button>
+          <button className="button-secondary" onClick={() => setLastSale(null)}>
+            Ausblenden
+          </button>
+        </div>
+      )}
+      {lastSale && lastSale.voided && (
+        <div className="sale-confirm-banner voided">
+          <span>Verkauf Nr. {lastSale.receiptNumber} wurde storniert.</span>
+          <button className="button-secondary" onClick={() => setLastSale(null)}>
+            Ausblenden
+          </button>
+        </div>
+      )}
       {lastPrintResult && !lastPrintResult.ok && (
         <div className="print-error-banner">
           <span>

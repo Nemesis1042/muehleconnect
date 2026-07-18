@@ -49,6 +49,7 @@ export interface SaleRecord {
   totalCents: number
   cashReceivedCents: number
   changeCents: number
+  voided: boolean
   items: SaleItemRecord[]
 }
 
@@ -136,6 +137,18 @@ export interface PrintResult {
   jobs: PrintJobItem[]
 }
 
+export interface BackupInfo {
+  path: string
+  /** ISO timestamp of the last automatic backup. */
+  at: string
+}
+
+export interface BackupResult {
+  ok: boolean
+  path?: string
+  error?: string
+}
+
 export interface KassenApi {
   products: {
     list(): Promise<Product[]>
@@ -148,6 +161,7 @@ export interface KassenApi {
   sale: {
     create(input: CreateSaleInput): Promise<CreateSaleResult>
     reprint(saleId: number): Promise<PrintResult>
+    void(saleId: number): Promise<SaleRecord>
   }
   printer: {
     listDevices(): Promise<UsbDeviceInfo[]>
@@ -161,5 +175,9 @@ export interface KassenApi {
   journal: {
     get(from: string, to: string): Promise<JournalReport>
     print(from: string, to: string): Promise<PrintResult>
+  }
+  backup: {
+    exportToFile(): Promise<BackupResult>
+    getLastAuto(): Promise<BackupInfo | null>
   }
 }

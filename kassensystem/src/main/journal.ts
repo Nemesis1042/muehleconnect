@@ -12,7 +12,7 @@ export function getJournal(from: string, to: string): JournalReport {
               SUM(si.quantity) as quantity, SUM(si.price_cents * si.quantity) as total_cents
        FROM sale_items si
        JOIN sales s ON s.id = si.sale_id
-       WHERE s.created_at >= ? AND s.created_at < ?
+       WHERE s.created_at >= ? AND s.created_at < ? AND s.voided = 0
        GROUP BY si.product_id, si.price_cents, si.tax_class
        ORDER BY MIN(si.id) ASC`
     )

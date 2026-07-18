@@ -43,7 +43,14 @@ export function updateProduct(id: number, input: Partial<ProductInput>): Product
 }
 
 export function removeProduct(id: number): void {
-  getDb().prepare('DELETE FROM products WHERE id = ? AND code IS NULL').run(id)
+  const db = getDb()
+  const sold = db.prepare('SELECT 1 FROM sale_items WHERE product_id = ? LIMIT 1').get(id)
+  if (sold) {
+    throw new Error(
+      'Produkt wurde bereits verkauft und kann nicht gelöscht werden – stattdessen das Häkchen "Aktiv" entfernen.'
+    )
+  }
+  db.prepare('DELETE FROM products WHERE id = ? AND code IS NULL').run(id)
 }
 
 export function reorderProducts(orderedIds: number[]): void {
