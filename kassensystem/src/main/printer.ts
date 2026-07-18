@@ -147,6 +147,12 @@ class UsbEscposInterface {
  * Data bits/parity/stop bits are hardcoded to 8/none/1, which covers the near-universal ESC/POS
  * serial default; only the baud rate varies enough in practice to be worth exposing in Settings.
  */
+// Some USB-to-serial adapters (e.g. FTDI) toggle DTR/RTS the moment the port opens, which many
+// thermal printers read as a reset pulse - bytes written immediately after open can arrive while
+// the printer is still settling and come out corrupted, even though the rest of the job prints
+// fine right after. This delay gives the printer time to finish settling before we send anything.
+const SERIAL_OPEN_SETTLE_MS = 300
+
 class SerialEscposInterface {
   constructor(
     private readonly path: string,
@@ -179,16 +185,20 @@ class SerialEscposInterface {
 
       port.once('error', reject)
 
-      port.write(buffer, (writeErr) => {
-        if (writeErr) {
-          reject(writeErr)
-          return
-        }
-        port.drain((drainErr) => {
-          port.close()
-          if (drainErr) reject(drainErr)
-          else resolve('ok')
-        })
+      port.once('open', () => {
+        setTimeout(() => {
+          port.write(buffer, (writeErr) => {
+            if (writeErr) {
+              reject(writeErr)
+              return
+            }
+            port.drain((drainErr) => {
+              port.close()
+              if (drainErr) reject(drainErr)
+              else resolve('ok')
+            })
+          })
+        }, SERIAL_OPEN_SETTLE_MS)
       })
     })
   }
