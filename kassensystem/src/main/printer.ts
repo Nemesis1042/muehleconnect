@@ -357,8 +357,10 @@ function fillVoucher(
 function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleRecord): void {
   printer.alignCenter()
   printer.bold(true)
+  printer.setTextDoubleHeight()
   printer.println(settings.titleLine1)
   if (settings.titleLine2) printer.println(settings.titleLine2)
+  printer.setTextNormal()
   printer.bold(false)
   printer.newLine()
   printer.println(settings.orgName)
@@ -368,27 +370,40 @@ function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleReco
   printer.newLine()
   printer.alignLeft()
   printer.drawLine()
+  printer.newLine()
 
   for (const item of sale.items) {
     printer.println(`${item.quantity} x ${item.productName}`)
-    printer.leftRight(
-      `  ${formatEuro(item.priceCents)} =`,
-      `${formatEuro(item.priceCents * item.quantity)} ${item.taxClass}`
-    )
+    const lineTotal = `${formatEuro(item.priceCents * item.quantity)} ${item.taxClass}`
+    // Für Menge 1 wäre "Einzelpreis = Gesamtpreis" reine Wiederholung derselben Zahl - nur ab
+    // Menge 2 ist der Einzelpreis eine zusätzliche Information, die es wert ist, gedruckt zu werden.
+    if (item.quantity > 1) {
+      printer.leftRight(`  ${formatEuro(item.priceCents)} =`, lineTotal)
+    } else {
+      printer.leftRight('', lineTotal)
+    }
   }
 
+  printer.newLine()
   printer.drawLine()
   printer.bold(true)
   printer.leftRight('Summe:', formatEuro(sale.totalCents))
   printer.bold(false)
+  printer.leftRight('Gegeben:', formatEuro(sale.cashReceivedCents))
+  printer.leftRight('Rückgeld:', formatEuro(sale.changeCents))
   printer.newLine()
+  printer.drawLine()
 
   const breakdown = taxBreakdown(
     sale.items.map((i) => ({ taxClass: i.taxClass, grossCents: i.priceCents * i.quantity })),
     { A: settings.taxRateA, B: settings.taxRateB }
   )
   printTaxBreakdown(printer, breakdown)
+  printer.newLine()
 
+  printer.alignCenter()
+  printer.println('Vielen Dank und schönes Fest!')
+  printer.alignLeft()
   printer.newLine()
   printer.println(formatDateTime(new Date(sale.createdAt)))
   printer.println(`Kasse ${settings.registerNumber} - No. ${sale.receiptNumber}`)
