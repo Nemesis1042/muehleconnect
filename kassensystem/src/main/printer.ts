@@ -488,13 +488,10 @@ export async function listSerialPorts(): Promise<SerialPortInfo[]> {
 
   // Linux exposes ~32 legacy /dev/ttyS0-31 "ports" on nearly every x86 machine regardless of
   // whether any hardware is behind them; they never have manufacturer/vendorId info, unlike a
-  // real USB-to-serial adapter. Sort those recognized ones first instead of filtering, so a
-  // genuine (if unusual) /dev/ttyS0 printer stays selectable without burying it in noise.
+  // real USB-to-serial adapter. Only list recognized ones - a genuine printer on a bare
+  // /dev/ttyS0 without any USB descriptor info is rare enough that a clean list wins out here.
   const isRecognized = (p: SerialPortInfo): boolean => Boolean(p.manufacturer || p.vendorId)
-  return infos.sort((a, b) => {
-    const recognizedDiff = Number(isRecognized(b)) - Number(isRecognized(a))
-    return recognizedDiff !== 0 ? recognizedDiff : a.path.localeCompare(b.path)
-  })
+  return infos.filter(isRecognized).sort((a, b) => a.path.localeCompare(b.path))
 }
 
 export async function printTestPage(settings: Settings): Promise<PrintResult> {
