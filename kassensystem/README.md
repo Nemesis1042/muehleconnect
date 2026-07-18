@@ -145,6 +145,13 @@ es z.B. 19200). Steht die Baudrate nicht auf dem Typenschild/im Handbuch oder an
 Gerät, hilft Ausprobieren: mit "Testdruck" prüfen, ob lesbarer Text herauskommt (falsche Baudrate
 liefert entweder gar nichts oder Zeichenmüll).
 
+> **Nur der Anfang des Ausdrucks ist Zeichenmüll, der Rest ist lesbar?** Das ist kein
+> Baudrate-Problem, sondern ein bekannter USB-zu-Seriell-Adapter-Effekt: Manche Adapter (z.B.
+> FTDI) lösen beim Öffnen des Ports kurz DTR/RTS aus, was der Drucker als Reset liest — die
+> ersten Bytes des Auftrags treffen dann ein, während der Drucker noch nicht bereit ist. Die App
+> wartet deshalb nach dem Öffnen des Ports kurz, bevor sie zu drucken beginnt; sollte das bei
+> einem bestimmten Gerät nicht reichen, meldet euch mit einem Foto des Ausdrucks.
+
 **Beide Anbindungsarten:** Ohne ausgewählten Drucker (weder USB noch seriell) läuft die App im
 **Dry-Run-Modus**: Bons werden nicht gedruckt, sondern nur als Text protokolliert — praktisch, um
 die App schon mal ohne angeschlossenen Drucker auszuprobieren.
