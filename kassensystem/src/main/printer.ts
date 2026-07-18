@@ -252,7 +252,9 @@ function createPrinterSession(settings: Settings): PrinterSession {
     interface: iface as unknown as string,
     width: PRINTER_WIDTH,
     removeSpecialCharacters: false,
-    characterSet: CharacterSet.PC850_MULTILINGUAL
+    // PC850 predates the euro currency and has no € glyph, which printed as "ñ" on real hardware
+    // (confirmed via a live receipt photo); PC858 is the same codepage with € added at that slot.
+    characterSet: CharacterSet.PC858_EURO
   })
 
   return { printer, dryRun }
