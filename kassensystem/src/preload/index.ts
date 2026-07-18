@@ -18,7 +18,8 @@ const api: KassenApi = {
   },
   sale: {
     create: (input: CreateSaleInput) => ipcRenderer.invoke('sale:create', input),
-    reprint: (saleId: number) => ipcRenderer.invoke('sale:reprint', saleId)
+    reprint: (saleId: number) => ipcRenderer.invoke('sale:reprint', saleId),
+    void: (saleId: number) => ipcRenderer.invoke('sale:void', saleId)
   },
   printer: {
     listDevices: () => ipcRenderer.invoke('printer:listDevices'),
@@ -32,6 +33,10 @@ const api: KassenApi = {
   journal: {
     get: (from: string, to: string) => ipcRenderer.invoke('journal:get', from, to),
     print: (from: string, to: string) => ipcRenderer.invoke('journal:print', from, to)
+  },
+  backup: {
+    exportToFile: () => ipcRenderer.invoke('backup:exportToFile'),
+    getLastAuto: () => ipcRenderer.invoke('backup:getLastAuto')
   }
 }
 

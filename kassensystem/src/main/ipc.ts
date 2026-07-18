@@ -7,7 +7,7 @@ import {
   reorderProducts,
   updateProduct
 } from './products'
-import { createSale, getSale } from './sales'
+import { createSale, getSale, voidSale } from './sales'
 import { getSettings, updateSettings } from './settings'
 import { getJournal } from './journal'
 import {
@@ -17,6 +17,7 @@ import {
   printSale,
   printTestPage
 } from './printer'
+import { exportDatabaseToFile, getLastAutoBackup, runAutoBackup } from './backup'
 import type { CreateSaleInput, ProductInput } from '../shared/types'
 
 export function registerIpcHandlers(): void {
@@ -32,12 +33,14 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('sale:create', async (_e, input: CreateSaleInput) => {
     const sale = createSale(input)
     const printResult = await printSale(sale, getSettings(), { printReceipt: input.printReceipt })
+    void runAutoBackup()
     return { sale, printResult }
   })
   ipcMain.handle('sale:reprint', async (_e, saleId: number) => {
     const sale = getSale(saleId)
     return printSale(sale, getSettings())
   })
+  ipcMain.handle('sale:void', (_e, saleId: number) => voidSale(saleId))
 
   ipcMain.handle('printer:listDevices', () => listUsbPrinterDevices())
   ipcMain.handle('printer:listSerialPorts', () => listSerialPorts())
@@ -51,4 +54,7 @@ export function registerIpcHandlers(): void {
     const report = getJournal(from, to)
     return printJournalReport(report, getSettings())
   })
+
+  ipcMain.handle('backup:exportToFile', () => exportDatabaseToFile())
+  ipcMain.handle('backup:getLastAuto', () => getLastAutoBackup())
 }

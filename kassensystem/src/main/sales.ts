@@ -49,6 +49,13 @@ export function createSale(input: Omit<CreateSaleInput, 'printReceipt'>): SaleRe
   return getSale(saleId)
 }
 
+export function voidSale(id: number): SaleRecord {
+  const db = getDb()
+  const result = db.prepare('UPDATE sales SET voided = 1 WHERE id = ?').run(id)
+  if (result.changes === 0) throw new Error(`Verkauf ${id} nicht gefunden`)
+  return getSale(id)
+}
+
 export function getSale(id: number): SaleRecord {
   const db = getDb()
   const saleRow = db.prepare('SELECT * FROM sales WHERE id = ?').get(id) as
@@ -59,6 +66,7 @@ export function getSale(id: number): SaleRecord {
         total_cents: number
         cash_received_cents: number
         change_cents: number
+        voided: number
       }
     | undefined
   if (!saleRow) throw new Error(`Verkauf ${id} nicht gefunden`)
@@ -94,6 +102,7 @@ export function getSale(id: number): SaleRecord {
     totalCents: saleRow.total_cents,
     cashReceivedCents: saleRow.cash_received_cents,
     changeCents: saleRow.change_cents,
+    voided: !!saleRow.voided,
     items
   }
 }

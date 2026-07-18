@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { Settings, SerialPortInfo, UsbDeviceInfo } from '@shared/types'
+import type { BackupInfo, Settings, SerialPortInfo, UsbDeviceInfo } from '@shared/types'
+
+function formatBackupTimestamp(iso: string): string {
+  const d = new Date(iso)
+  const pad = (n: number): string => String(n).padStart(2, '0')
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 function platformHint(): string | null {
   const ua = navigator.userAgent
@@ -40,12 +46,33 @@ export default function Einstellungen(): JSX.Element {
   const [scanningSerial, setScanningSerial] = useState(false)
   const [testResult, setTestResult] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const [lastBackup, setLastBackup] = useState<BackupInfo | null>(null)
+  const [backupResult, setBackupResult] = useState<string | null>(null)
+  const [backingUp, setBackingUp] = useState(false)
 
   useEffect(() => {
     void window.kassen.settings.get().then(setSettings)
     void scanDevices()
     void scanSerialPorts()
+    void refreshLastBackup()
   }, [])
+
+  async function refreshLastBackup(): Promise<void> {
+    setLastBackup(await window.kassen.backup.getLastAuto())
+  }
+
+  async function handleExportBackup(): Promise<void> {
+    setBackingUp(true)
+    setBackupResult(null)
+    try {
+      const result = await window.kassen.backup.exportToFile()
+      setBackupResult(
+        result.ok ? `Gesichert nach: ${result.path}` : `Sicherung nicht gespeichert: ${result.error}`
+      )
+    } finally {
+      setBackingUp(false)
+    }
+  }
 
   async function scanDevices(): Promise<void> {
     setScanning(true)
@@ -137,6 +164,27 @@ export default function Einstellungen(): JSX.Element {
             />
           </label>
         </div>
+        <p className="printer-platform-hint">
+          Laufen mehrere Kassen-Laptops gleichzeitig: Jede Kasse braucht hier eine eigene,
+          eindeutige Kassennummer. Sie erscheint auf jedem Bon/Wertbon (z. B. „Kasse 1 – No.
+          177“) und macht Bon-/Wertbon-Nummern über mehrere Kassen hinweg eindeutig
+          unterscheidbar.
+        </p>
+      </section>
+
+      <section className="settings-section">
+        <h2>Datensicherung</h2>
+        <p>
+          Nach jedem Verkauf wird automatisch eine Sicherungskopie der Kassendaten angelegt (die
+          letzten 5 werden aufgehoben).{' '}
+          {lastBackup
+            ? `Letzte automatische Sicherung: ${formatBackupTimestamp(lastBackup.at)}.`
+            : 'Bisher noch keine automatische Sicherung vorhanden.'}
+        </p>
+        <button className="button-secondary" onClick={() => void handleExportBackup()} disabled={backingUp}>
+          {backingUp ? 'Sichere…' : 'Jetzt manuell sichern (z. B. auf USB-Stick)'}
+        </button>
+        {backupResult && <p>{backupResult}</p>}
       </section>
 
       <section className="settings-section">

@@ -38,7 +38,8 @@ export function initDb(dbPath?: string): Database.Database {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       total_cents INTEGER NOT NULL,
       cash_received_cents INTEGER NOT NULL,
-      change_cents INTEGER NOT NULL
+      change_cents INTEGER NOT NULL,
+      voided INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS sale_items (
@@ -58,8 +59,20 @@ export function initDb(dbPath?: string): Database.Database {
     );
   `)
 
+  migrate()
   seedDefaults()
   return db
+}
+
+// `CREATE TABLE IF NOT EXISTS` above never touches an already-existing table, so installs from
+// before a column was added need an explicit ALTER TABLE here - this must stay append-only and
+// backwards-compatible, since it runs against real festival data on the Kassen-Laptop.
+function migrate(): void {
+  const columns = db.prepare('PRAGMA table_info(sales)').all() as Array<{ name: string }>
+  const hasVoided = columns.some((c) => c.name === 'voided')
+  if (!hasVoided) {
+    db.exec('ALTER TABLE sales ADD COLUMN voided INTEGER NOT NULL DEFAULT 0')
+  }
 }
 
 const DEFAULT_SETTINGS: Settings = {

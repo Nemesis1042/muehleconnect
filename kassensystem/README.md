@@ -158,7 +158,33 @@ Mehrwertsteuersatz und ggf. Pfandbeträge eintragen, nicht benötigte Beispielpr
 Unter "Einstellungen" außerdem Kopfzeile (z. B. Veranstaltungsname), Adresse der Organisation und
 Kassennummer eintragen — diese Angaben erscheinen auf jedem Bon.
 
+**Laufen mehrere Kassen-Laptops gleichzeitig** (mehrere Verkaufsstellen am selben Fest): Jeder
+Laptop braucht in "Einstellungen" eine **eigene, eindeutige Kassennummer** (1, 2, 3, …). Sie
+erscheint auf jedem Bon/Wertbon (z. B. "Kasse 1 – No. 177") und macht die sonst pro Gerät bei 1
+neu beginnenden Bon-/Wertbon-Nummern über alle Kassen hinweg eindeutig unterscheidbar. Jede Kasse
+führt ihr eigenes lokales Kassen-Journal; für eine Gesamtübersicht über alle Kassen das Journal
+auf jedem Laptop einzeln drucken/exportieren.
+
 Damit ist die Kasse einsatzbereit.
+
+### 6. Datensicherung
+
+Die Verkaufsdaten liegen als SQLite-Datei lokal auf dem Kassen-Laptop. Damit ein Festplattenfehler,
+ein verschütteter Drink oder ein Diebstahl am Verkaufstag nicht den ganzen Tagesumsatz löscht:
+
+- **Automatisch:** Nach jedem Verkauf legt die App selbstständig eine Sicherungskopie an (die
+  letzten 5 werden aufgehoben). Das läuft im Hintergrund, ohne dass jemand etwas tun muss.
+- **Manuell:** Unter "Einstellungen" → "Datensicherung" → "Jetzt manuell sichern" lässt sich
+  jederzeit eine Kopie an einen frei wählbaren Ort speichern (z. B. auf einen USB-Stick) — sinnvoll
+  z. B. am Ende jedes Verkaufstages.
+
+### Verkauf stornieren
+
+Passiert ein Fehlverkauf (falsche Menge, falscher Artikel, Kunde bezahlt doch nicht), lässt sich
+der zuletzt getätigte Verkauf direkt auf der Kassen-Seite über den Button "Stornieren" rückgängig
+machen. Bereits gedruckte Bons/Wertbons bleiben davon körperlich unberührt, der Verkauf zählt aber
+ab dann nicht mehr im Kassen-Journal mit. Ältere, bereits abgeschlossene Verkäufe lassen sich
+aktuell nicht nachträglich stornieren.
 
 ## Entwicklung
 
