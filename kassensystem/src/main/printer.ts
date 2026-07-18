@@ -56,8 +56,12 @@ function toHex(n: number): string {
   return '0x' + n.toString(16).padStart(4, '0')
 }
 
+// Plain ASCII "EUR" instead of "€": switching the printer's codepage from PC850 to PC858 (which is
+// supposed to add a € glyph) still printed garbage on the real hardware - this printer's firmware
+// clearly doesn't implement the codepage table node-thermal-printer assumes. ASCII sidesteps the
+// whole class of codepage/font-table mismatches, on this printer and any other.
 function formatEuro(cents: number): string {
-  return (cents / 100).toFixed(2).replace('.', ',') + ' €'
+  return (cents / 100).toFixed(2).replace('.', ',') + ' EUR'
 }
 
 function formatDateTime(d: Date): string {
@@ -252,9 +256,10 @@ function createPrinterSession(settings: Settings): PrinterSession {
     interface: iface as unknown as string,
     width: PRINTER_WIDTH,
     removeSpecialCharacters: false,
-    // PC850 predates the euro currency and has no € glyph, which printed as "ñ" on real hardware
-    // (confirmed via a live receipt photo); PC858 is the same codepage with € added at that slot.
-    characterSet: CharacterSet.PC858_EURO
+    // German umlauts (ü/ö/ä) print correctly under this codepage on the real hardware; the € glyph
+    // never did (confirmed under both PC850 and PC858), so printed prices use ASCII "EUR" instead
+    // and don't depend on this codepage's currency support at all.
+    characterSet: CharacterSet.PC850_MULTILINGUAL
   })
 
   return { printer, dryRun }
