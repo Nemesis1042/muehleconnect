@@ -14,9 +14,16 @@ export default function Cart({ lines, totalCents, onRemoveOne, onCheckout }: Pro
       <h2 className="cart-title">Warenkorb</h2>
       <div className="cart-lines">
         {lines.length === 0 && <p className="cart-empty">Noch keine Artikel ausgewählt.</p>}
-        {lines.map((line) => (
+        {lines.map((line, index) => (
           <div
-            key={`${line.productId}-${line.isDeposit ? 'pfand' : 'item'}`}
+            // Jede Pfand-Zeile trägt dieselbe productId (die des einen globalen Pfand-Produkts),
+            // egal welches Getränk sie ausgelöst hat - bei mehreren verschiedenen Pfand-Getränken
+            // im Warenkorb kollidierte der Key dadurch, React verwechselte die Zeilen beim Neu-
+            // Rendern und alte Pfand-Zeilen blieben nach dem Entfernen sichtbar hängen. Der Index
+            // macht den Key eindeutig - die Zeilenliste wird bei jedem Render komplett neu aus dem
+            // Warenkorb berechnet, es gibt also keine Animation/lokalen State, für den die Position
+            // sonst stabil bleiben müsste.
+            key={`${line.productId}-${line.isDeposit ? 'pfand' : 'item'}-${index}`}
             className={`cart-line${line.isDeposit ? ' cart-line-deposit' : ''}`}
           >
             {line.isDeposit ? (
