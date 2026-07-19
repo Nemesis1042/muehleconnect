@@ -5,7 +5,7 @@ interface Props {
   totalCents: number
   submitting: boolean
   error?: string | null
-  onConfirm: (cashReceivedCents: number) => void
+  onConfirm: (cashReceivedCents: number, printReceipt: boolean) => void
   onCancel: () => void
 }
 
@@ -77,12 +77,20 @@ export default function CashKeypad({
           </button>
           <button
             className="button-primary"
-            onClick={() => onConfirm(receivedCents)}
+            onClick={() => onConfirm(receivedCents, false)}
             disabled={!canConfirm}
           >
             {submitting ? 'Wird gedruckt…' : 'Bestätigen'}
           </button>
         </div>
+        <button
+          type="button"
+          className="button-secondary cash-keypad-receipt-button"
+          onClick={() => onConfirm(receivedCents, true)}
+          disabled={!canConfirm}
+        >
+          Bestätigen + Bon drucken
+        </button>
       </div>
     </div>
   )

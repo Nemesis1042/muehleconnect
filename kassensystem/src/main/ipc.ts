@@ -30,12 +30,15 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('products:remove', (_e, id: number) => removeProduct(id))
   ipcMain.handle('products:reorder', (_e, orderedIds: number[]) => reorderProducts(orderedIds))
 
-  ipcMain.handle('sale:create', async (_e, input: CreateSaleInput) => {
-    const sale = createSale(input)
-    const printResult = await printSale(sale, getSettings())
-    void runAutoBackup()
-    return { sale, printResult }
-  })
+  ipcMain.handle(
+    'sale:create',
+    async (_e, input: CreateSaleInput, printOptions?: PrintSaleOptions) => {
+      const sale = createSale(input)
+      const printResult = await printSale(sale, getSettings(), printOptions)
+      void runAutoBackup()
+      return { sale, printResult }
+    }
+  )
   ipcMain.handle('sale:reprint', async (_e, saleId: number, options?: PrintSaleOptions) => {
     const sale = getSale(saleId)
     return printSale(sale, getSettings(), options)

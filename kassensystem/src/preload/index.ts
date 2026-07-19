@@ -18,7 +18,8 @@ const api: KassenApi = {
     reorder: (orderedIds: number[]) => ipcRenderer.invoke('products:reorder', orderedIds)
   },
   sale: {
-    create: (input: CreateSaleInput) => ipcRenderer.invoke('sale:create', input),
+    create: (input: CreateSaleInput, printOptions?: PrintSaleOptions) =>
+      ipcRenderer.invoke('sale:create', input, printOptions),
     reprint: (saleId: number, options?: PrintSaleOptions) =>
       ipcRenderer.invoke('sale:reprint', saleId, options),
     void: (saleId: number) => ipcRenderer.invoke('sale:void', saleId)
