@@ -8,6 +8,7 @@ import CashKeypad from '../components/CashKeypad'
 
 const VOUCHERS_ONLY: PrintSaleOptions = { printReceipt: false, printVouchers: true }
 const RECEIPT_ONLY: PrintSaleOptions = { printReceipt: true, printVouchers: false }
+const RECEIPT_AND_VOUCHERS: PrintSaleOptions = { printReceipt: true, printVouchers: true }
 
 export default function Kasse(): JSX.Element {
   const [products, setProducts] = useState<Product[]>([])
@@ -78,17 +79,18 @@ export default function Kasse(): JSX.Element {
     })
   }
 
-  async function confirmPayment(cashReceivedCents: number): Promise<void> {
+  async function confirmPayment(cashReceivedCents: number, printReceipt: boolean): Promise<void> {
     setSubmitting(true)
     setError(null)
+    const printOptions = printReceipt ? RECEIPT_AND_VOUCHERS : VOUCHERS_ONLY
     try {
-      const result = await window.kassen.sale.create({
-        lines: cartInputLines,
-        cashReceivedCents
-      })
+      const result = await window.kassen.sale.create(
+        { lines: cartInputLines, cashReceivedCents },
+        printOptions
+      )
       setLastSale(result.sale)
       setLastPrintResult(result.printResult)
-      setLastPrintOptions(VOUCHERS_ONLY)
+      setLastPrintOptions(printOptions)
       setRawCart({})
       setCheckoutOpen(false)
     } catch (e) {
@@ -211,7 +213,7 @@ export default function Kasse(): JSX.Element {
           totalCents={totalCents}
           submitting={submitting}
           error={error}
-          onConfirm={(cash) => void confirmPayment(cash)}
+          onConfirm={(cash, printReceipt) => void confirmPayment(cash, printReceipt)}
           onCancel={() => setCheckoutOpen(false)}
         />
       )}

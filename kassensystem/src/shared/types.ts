@@ -163,7 +163,7 @@ export interface KassenApi {
     reorder(orderedIds: number[]): Promise<void>
   }
   sale: {
-    create(input: CreateSaleInput): Promise<CreateSaleResult>
+    create(input: CreateSaleInput, printOptions?: PrintSaleOptions): Promise<CreateSaleResult>
     reprint(saleId: number, options?: PrintSaleOptions): Promise<PrintResult>
     void(saleId: number): Promise<SaleRecord>
   }
