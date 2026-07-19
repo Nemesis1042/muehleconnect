@@ -99,7 +99,7 @@
 /* Cart */
 
 .cart-panel {
-  width: 340px;
+  width: 440px;
   flex-shrink: 0;
   padding: 1rem;
   display: flex;
@@ -139,8 +139,8 @@
 
 .cart-line-remove,
 .cart-line-remove-placeholder {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2.2rem;
+  height: 2.2rem;
   flex-shrink: 0;
 }
 
@@ -149,7 +149,14 @@
   border: 1px solid var(--color-border);
   border-radius: 50%;
   color: var(--color-danger);
+  font-size: 1.3rem;
   line-height: 1;
+  cursor: pointer;
+}
+
+.cart-line-remove:hover {
+  background: #fdecea;
+  border-color: var(--color-danger);
 }
 
 .cart-line-name {
@@ -301,7 +308,9 @@
 /* Produkte */
 
 .produkte-page {
-  max-width: 1180px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .produkte-toolbar {
@@ -378,7 +387,9 @@
 /* Einstellungen */
 
 .einstellungen-page {
-  max-width: 780px;
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -490,7 +501,9 @@
 /* Tagesübersicht / Journal */
 
 .journal-page {
-  max-width: 800px;
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .journal-filter {
