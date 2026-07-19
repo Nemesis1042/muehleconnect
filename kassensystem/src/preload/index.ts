@@ -39,7 +39,10 @@ const api: KassenApi = {
   },
   backup: {
     exportToFile: () => ipcRenderer.invoke('backup:exportToFile'),
-    getLastAuto: () => ipcRenderer.invoke('backup:getLastAuto')
+    getLastAuto: () => ipcRenderer.invoke('backup:getLastAuto'),
+    exportCsv: () => ipcRenderer.invoke('backup:exportCsv'),
+    exportExcel: () => ipcRenderer.invoke('backup:exportExcel'),
+    exportPdf: () => ipcRenderer.invoke('backup:exportPdf')
   }
 }
 

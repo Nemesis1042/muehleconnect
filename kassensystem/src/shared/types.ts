@@ -53,6 +53,19 @@ export interface SaleRecord {
   items: SaleItemRecord[]
 }
 
+/** One row per sale item, flattened for the CSV/Excel/PDF data exports. */
+export interface SaleExportRow {
+  saleId: number
+  receiptNumber: number
+  createdAt: string
+  voided: boolean
+  productName: string
+  quantity: number
+  priceCents: number
+  totalCents: number
+  taxClass: TaxClass
+}
+
 export interface CreateSaleInput {
   lines: CartInputLine[]
   cashReceivedCents: number
@@ -183,5 +196,8 @@ export interface KassenApi {
   backup: {
     exportToFile(): Promise<BackupResult>
     getLastAuto(): Promise<BackupInfo | null>
+    exportCsv(): Promise<BackupResult>
+    exportExcel(): Promise<BackupResult>
+    exportPdf(): Promise<BackupResult>
   }
 }

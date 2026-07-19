@@ -187,6 +187,17 @@ ein verschütteter Drink oder ein Diebstahl am Verkaufstag nicht den ganzen Tage
   jederzeit eine Kopie an einen frei wählbaren Ort speichern (z. B. auf einen USB-Stick) — sinnvoll
   z. B. am Ende jedes Verkaufstages.
 
+Zusätzlich zur reinen SQLite-Sicherung gibt es im selben Abschnitt "Verkaufsdaten exportieren" —
+alle Verkäufe (nicht nur ein Tag) als lesbare Tabelle, z. B. für Nachbereitung oder Buchhaltung:
+
+- **CSV** — mit Semikolon getrennt (deutsches Excel-Format) und UTF-8-BOM, damit Umlaute beim
+  Öffnen in Excel korrekt erscheinen.
+- **Excel (.xlsx)** — dieselben Spalten als fertige Arbeitsmappe.
+- **PDF** — dieselben Daten als druckbare Tabelle (querformat).
+
+Alle drei enthalten dieselben Spalten: Datum, Uhrzeit, Beleg-Nr., Artikel, Menge, Einzelpreis,
+Gesamtpreis, MwSt.-Klasse und ob der Verkauf storniert wurde.
+
 ### Verkauf stornieren
 
 Passiert ein Fehlverkauf (falsche Menge, falscher Artikel, Kunde bezahlt doch nicht), lässt sich
