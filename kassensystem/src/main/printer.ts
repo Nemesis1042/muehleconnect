@@ -49,8 +49,11 @@ async function getUsbDevices(): Promise<UsbDeviceHandle[]> {
 
 // USB Printer Class (see USB.org base class definitions), used to auto-detect receipt printers.
 const USB_PRINTER_CLASS = 7
-// 48 columns fits a common 80mm ESC/POS receipt printer at Font A.
-const PRINTER_WIDTH = 48
+// 48 columns is the common 80mm ESC/POS default, but the real hardware in use physically wraps
+// at 44 - confirmed by reproducing an observed receipt's exact wrap points ("2,50 E" / "UR A")
+// against both widths in isolation. leftRight() pads to fill the *configured* width with no
+// wrap-awareness of its own, so a too-wide config reliably overflows onto a stray extra line.
+const PRINTER_WIDTH = 44
 
 function toHex(n: number): string {
   return '0x' + n.toString(16).padStart(4, '0')
