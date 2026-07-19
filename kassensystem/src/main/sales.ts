@@ -1,7 +1,7 @@
 import { getDb, nextReceiptNumber, nextVoucherNumbers } from './db'
 import { listProducts, getPfandProduct } from './products'
 import { expandCart, cartTotalCents, changeCents } from '../shared/cart'
-import type { CreateSaleInput, SaleItemRecord, SaleRecord } from '../shared/types'
+import type { CreateSaleInput, SaleExportRow, SaleItemRecord, SaleRecord } from '../shared/types'
 
 export function createSale(input: CreateSaleInput): SaleRecord {
   const products = listProducts()
@@ -47,6 +47,42 @@ export function createSale(input: CreateSaleInput): SaleRecord {
   tx()
 
   return getSale(saleId)
+}
+
+/** Flat, one-row-per-sale-item view of every sale ever recorded - the basis for the CSV/Excel/PDF
+ * data exports (unlike getJournal(), this isn't aggregated or date-filtered: it's the full,
+ * auditable history for a backup/export, not a day's till report). */
+export function listAllSaleItemsForExport(): SaleExportRow[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT s.id as sale_id, s.receipt_number, s.created_at, s.voided,
+              si.product_name, si.quantity, si.price_cents, si.tax_class
+       FROM sale_items si
+       JOIN sales s ON s.id = si.sale_id
+       ORDER BY s.id ASC, si.id ASC`
+    )
+    .all() as Array<{
+    sale_id: number
+    receipt_number: number
+    created_at: string
+    voided: number
+    product_name: string
+    quantity: number
+    price_cents: number
+    tax_class: 'A' | 'B'
+  }>
+
+  return rows.map((r) => ({
+    saleId: r.sale_id,
+    receiptNumber: r.receipt_number,
+    createdAt: r.created_at,
+    voided: !!r.voided,
+    productName: r.product_name,
+    quantity: r.quantity,
+    priceCents: r.price_cents,
+    totalCents: r.price_cents * r.quantity,
+    taxClass: r.tax_class
+  }))
 }
 
 export function voidSale(id: number): SaleRecord {

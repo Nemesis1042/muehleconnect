@@ -49,6 +49,7 @@ export default function Einstellungen(): JSX.Element {
   const [lastBackup, setLastBackup] = useState<BackupInfo | null>(null)
   const [backupResult, setBackupResult] = useState<string | null>(null)
   const [backingUp, setBackingUp] = useState(false)
+  const [exportingFormat, setExportingFormat] = useState<'csv' | 'excel' | 'pdf' | null>(null)
 
   useEffect(() => {
     void window.kassen.settings.get().then(setSettings)
@@ -71,6 +72,25 @@ export default function Einstellungen(): JSX.Element {
       )
     } finally {
       setBackingUp(false)
+    }
+  }
+
+  async function handleDataExport(format: 'csv' | 'excel' | 'pdf'): Promise<void> {
+    setExportingFormat(format)
+    setBackupResult(null)
+    try {
+      const action =
+        format === 'csv'
+          ? window.kassen.backup.exportCsv
+          : format === 'excel'
+            ? window.kassen.backup.exportExcel
+            : window.kassen.backup.exportPdf
+      const result = await action()
+      setBackupResult(
+        result.ok ? `Exportiert nach: ${result.path}` : `Export nicht gespeichert: ${result.error}`
+      )
+    } finally {
+      setExportingFormat(null)
     }
   }
 
@@ -184,6 +204,35 @@ export default function Einstellungen(): JSX.Element {
         <button className="button-secondary" onClick={() => void handleExportBackup()} disabled={backingUp}>
           {backingUp ? 'Sichere…' : 'Jetzt manuell sichern (z. B. auf USB-Stick)'}
         </button>
+
+        <h3>Verkaufsdaten exportieren</h3>
+        <p>
+          Alle Verkäufe (nicht nur ein Tag) als Tabelle exportieren, z. B. zur Nachbereitung oder
+          Buchhaltung.
+        </p>
+        <div className="settings-actions">
+          <button
+            className="button-secondary"
+            onClick={() => void handleDataExport('csv')}
+            disabled={exportingFormat !== null}
+          >
+            {exportingFormat === 'csv' ? 'Exportiere…' : 'Als CSV'}
+          </button>
+          <button
+            className="button-secondary"
+            onClick={() => void handleDataExport('excel')}
+            disabled={exportingFormat !== null}
+          >
+            {exportingFormat === 'excel' ? 'Exportiere…' : 'Als Excel'}
+          </button>
+          <button
+            className="button-secondary"
+            onClick={() => void handleDataExport('pdf')}
+            disabled={exportingFormat !== null}
+          >
+            {exportingFormat === 'pdf' ? 'Exportiere…' : 'Als PDF'}
+          </button>
+        </div>
         {backupResult && <p>{backupResult}</p>}
       </section>
 

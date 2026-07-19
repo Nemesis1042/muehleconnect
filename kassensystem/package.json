@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
+    "exceljs": "^4.4.0",
     "node-thermal-printer": "^4.6.0",
     "serialport": "^13.0.0",
     "usb": "^3.0.1"

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { initDb } from '../db'
 import { createProduct, removeProduct } from '../products'
-import { createSale, voidSale } from '../sales'
+import { createSale, listAllSaleItemsForExport, voidSale } from '../sales'
 import { getJournal } from '../journal'
 
 // initDb(':memory:') never touches Electron's `app.getPath`, so this runs outside the Electron
@@ -166,5 +166,36 @@ describe('getJournal', () => {
     expect(report.taxBreakdown).toEqual([
       { taxClass: 'A', ratePercent: 7, netCents: 935, taxCents: 65, grossCents: 1000 }
     ])
+  })
+})
+
+describe('listAllSaleItemsForExport', () => {
+  it('flattens every sale into one row per item, including voided sales', () => {
+    const bier = createProduct({
+      name: 'Bier',
+      priceCents: 200,
+      category: 'Getränke',
+      taxClass: 'B',
+      depositCents: 50,
+      sortOrder: 0,
+      active: true
+    })
+
+    const sale = createSale({ lines: [{ productId: bier.id, quantity: 2 }], cashReceivedCents: 500 })
+    voidSale(sale.id)
+
+    const rows = listAllSaleItemsForExport()
+    const bierRow = rows.find((r) => r.productName === 'Bier')
+    const pfandRow = rows.find((r) => r.productName === 'Pfand')
+
+    expect(rows).toHaveLength(2)
+    expect(bierRow).toMatchObject({
+      quantity: 2,
+      priceCents: 200,
+      totalCents: 400,
+      taxClass: 'B',
+      voided: true
+    })
+    expect(pfandRow).toMatchObject({ quantity: 2, priceCents: 50, totalCents: 100, voided: true })
   })
 })
