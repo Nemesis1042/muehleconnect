@@ -63,8 +63,12 @@ function toHex(n: number): string {
 // supposed to add a € glyph) still printed garbage on the real hardware - this printer's firmware
 // clearly doesn't implement the codepage table node-thermal-printer assumes. ASCII sidesteps the
 // whole class of codepage/font-table mismatches, on this printer and any other.
+function formatAmount(cents: number): string {
+  return (cents / 100).toFixed(2).replace('.', ',')
+}
+
 function formatEuro(cents: number): string {
-  return (cents / 100).toFixed(2).replace('.', ',') + ' Euro'
+  return `${formatAmount(cents)} Euro`
 }
 
 function formatDateTime(d: Date): string {
@@ -344,11 +348,13 @@ function fillVoucher(
   printer.alignCenter()
   printer.bold(true)
   printer.println(settings.titleLine1)
-  if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.bold(false)
+  if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.newLine()
   printer.bold(true)
+  printer.setTextDoubleHeight()
   printer.println(productName)
+  printer.setTextNormal()
   printer.bold(false)
   printer.println(formatEuro(priceCents))
   printer.newLine()
@@ -361,8 +367,8 @@ function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleReco
   printer.alignCenter()
   printer.bold(true)
   printer.println(settings.titleLine1)
-  if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.bold(false)
+  if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.newLine()
   printer.println(settings.orgName)
   printer.println(settings.orgStreet)
@@ -376,12 +382,16 @@ function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleReco
   printer.table(['Anz.', 'Artikel', 'Preis', 'Summe'])
   printer.drawLine()
 
+  // Der Artikelname bleibt auf einer eigenen vollbreiten Zeile (beliebig lang, siehe oben), die
+  // Preis-/Summe-Zeile darunter wird aber exakt auf dieselben Spaltengrenzen wie die Kopfzeile
+  // ausgerichtet (PRINTER_WIDTH / 4 je Spalte), damit die Beträge wirklich unter "Preis"/"Summe"
+  // stehen statt nur irgendwo rechtsbündig in der Zeile.
+  const columnWidth = PRINTER_WIDTH / 4
   for (const item of sale.items) {
     printer.println(`${item.quantity} x ${item.productName}`)
-    printer.leftRight(
-      `  ${formatEuro(item.priceCents)} =`,
-      `${formatEuro(item.priceCents * item.quantity)} ${item.taxClass}`
-    )
+    const unitCell = formatAmount(item.priceCents).padEnd(columnWidth)
+    const totalCell = `${formatAmount(item.priceCents * item.quantity)} ${item.taxClass}`
+    printer.println(' '.repeat(columnWidth * 2) + unitCell + totalCell)
   }
 
   printer.drawLine()
