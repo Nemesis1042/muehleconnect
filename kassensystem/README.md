@@ -1,9 +1,11 @@
 # Kassensystem Dobelmühle
 
 Schnelles Kassensystem für den Verkauf am Laptop mit USB-Bondrucker. Für jeden gekauften Artikel
-wird ein eigener Wertbon gedruckt (zum Einlösen an der Essens-/Getränkeausgabe), zusätzlich ein
-kombinierter Kassenbon pro Verkauf und ein druckbares Kassen-Journal als Tagesauswertung. Läuft
-komplett lokal (Electron + SQLite), keine Internetverbindung nötig.
+wird beim Kassieren automatisch ein eigener Wertbon gedruckt (zum Einlösen an der
+Essens-/Getränkeausgabe). Der kombinierte Kassenbon pro Verkauf wird **nicht** automatisch
+mitgedruckt — dafür gibt es nach dem Kassieren einen eigenen "Bon drucken"-Knopf, falls im
+Einzelfall doch ein Kassenbon gebraucht wird. Dazu ein druckbares Kassen-Journal als
+Tagesauswertung. Läuft komplett lokal (Electron + SQLite), keine Internetverbindung nötig.
 
 Eine Beschreibung, wie sich das System im Alltag bedienen lässt, steht in der
 [Projekt-README](../README.md). Diese Datei hier erklärt die technische Einrichtung.

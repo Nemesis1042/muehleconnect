@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Product, PrintResult, SaleRecord } from '@shared/types'
+import type { PrintSaleOptions, Product, PrintResult, SaleRecord } from '@shared/types'
 import { expandCart, cartTotalCents } from '@shared/cart'
 import { formatEuro } from '../format'
 import ProductGrid from '../components/ProductGrid'
 import Cart from '../components/Cart'
 import CashKeypad from '../components/CashKeypad'
+
+const VOUCHERS_ONLY: PrintSaleOptions = { printReceipt: false, printVouchers: true }
+const RECEIPT_ONLY: PrintSaleOptions = { printReceipt: true, printVouchers: false }
 
 export default function Kasse(): JSX.Element {
   const [products, setProducts] = useState<Product[]>([])
@@ -16,7 +19,9 @@ export default function Kasse(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [lastSale, setLastSale] = useState<SaleRecord | null>(null)
   const [lastPrintResult, setLastPrintResult] = useState<PrintResult | null>(null)
+  const [lastPrintOptions, setLastPrintOptions] = useState<PrintSaleOptions>(VOUCHERS_ONLY)
   const [voiding, setVoiding] = useState(false)
+  const [printingReceipt, setPrintingReceipt] = useState(false)
 
   useEffect(() => {
     void loadProducts()
@@ -73,17 +78,17 @@ export default function Kasse(): JSX.Element {
     })
   }
 
-  async function confirmPayment(cashReceivedCents: number, printReceipt: boolean): Promise<void> {
+  async function confirmPayment(cashReceivedCents: number): Promise<void> {
     setSubmitting(true)
     setError(null)
     try {
       const result = await window.kassen.sale.create({
         lines: cartInputLines,
-        cashReceivedCents,
-        printReceipt
+        cashReceivedCents
       })
       setLastSale(result.sale)
       setLastPrintResult(result.printResult)
+      setLastPrintOptions(VOUCHERS_ONLY)
       setRawCart({})
       setCheckoutOpen(false)
     } catch (e) {
@@ -97,10 +102,22 @@ export default function Kasse(): JSX.Element {
     if (lastSale === null) return
     setSubmitting(true)
     try {
-      const result = await window.kassen.sale.reprint(lastSale.id)
+      const result = await window.kassen.sale.reprint(lastSale.id, lastPrintOptions)
       setLastPrintResult(result)
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function printReceipt(): Promise<void> {
+    if (lastSale === null) return
+    setPrintingReceipt(true)
+    try {
+      const result = await window.kassen.sale.reprint(lastSale.id, RECEIPT_ONLY)
+      setLastPrintResult(result)
+      setLastPrintOptions(RECEIPT_ONLY)
+    } finally {
+      setPrintingReceipt(false)
     }
   }
 
@@ -127,6 +144,13 @@ export default function Kasse(): JSX.Element {
           <span>
             Verkauf Nr. {lastSale.receiptNumber} über {formatEuro(lastSale.totalCents)} gespeichert.
           </span>
+          <button
+            className="button-secondary"
+            onClick={() => void printReceipt()}
+            disabled={printingReceipt}
+          >
+            {printingReceipt ? 'Drucke…' : 'Bon drucken'}
+          </button>
           <button className="button-secondary" onClick={() => void voidLastSale()} disabled={voiding}>
             {voiding ? 'Storniere…' : 'Stornieren'}
           </button>
@@ -187,7 +211,7 @@ export default function Kasse(): JSX.Element {
           totalCents={totalCents}
           submitting={submitting}
           error={error}
-          onConfirm={(cash, printReceipt) => void confirmPayment(cash, printReceipt)}
+          onConfirm={(cash) => void confirmPayment(cash)}
           onCancel={() => setCheckoutOpen(false)}
         />
       )}
