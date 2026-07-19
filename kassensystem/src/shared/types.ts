@@ -56,8 +56,12 @@ export interface SaleRecord {
 export interface CreateSaleInput {
   lines: CartInputLine[]
   cashReceivedCents: number
-  /** Wertbons werden immer gedruckt; der kombinierte Kassenzettel ist pro Verkauf optional. */
-  printReceipt: boolean
+}
+
+/** printReceipt/printVouchers default to false/true - see printSale() in src/main/printer.ts. */
+export interface PrintSaleOptions {
+  printReceipt?: boolean
+  printVouchers?: boolean
 }
 
 export interface CreateSaleResult {
@@ -160,7 +164,7 @@ export interface KassenApi {
   }
   sale: {
     create(input: CreateSaleInput): Promise<CreateSaleResult>
-    reprint(saleId: number): Promise<PrintResult>
+    reprint(saleId: number, options?: PrintSaleOptions): Promise<PrintResult>
     void(saleId: number): Promise<SaleRecord>
   }
   printer: {

@@ -18,7 +18,7 @@ import {
   printTestPage
 } from './printer'
 import { exportDatabaseToFile, getLastAutoBackup, runAutoBackup } from './backup'
-import type { CreateSaleInput, ProductInput } from '../shared/types'
+import type { CreateSaleInput, PrintSaleOptions, ProductInput } from '../shared/types'
 
 export function registerIpcHandlers(): void {
   ipcMain.handle('products:list', () => listProducts())
@@ -32,13 +32,13 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('sale:create', async (_e, input: CreateSaleInput) => {
     const sale = createSale(input)
-    const printResult = await printSale(sale, getSettings(), { printReceipt: input.printReceipt })
+    const printResult = await printSale(sale, getSettings())
     void runAutoBackup()
     return { sale, printResult }
   })
-  ipcMain.handle('sale:reprint', async (_e, saleId: number) => {
+  ipcMain.handle('sale:reprint', async (_e, saleId: number, options?: PrintSaleOptions) => {
     const sale = getSale(saleId)
-    return printSale(sale, getSettings())
+    return printSale(sale, getSettings(), options)
   })
   ipcMain.handle('sale:void', (_e, saleId: number) => voidSale(saleId))
 

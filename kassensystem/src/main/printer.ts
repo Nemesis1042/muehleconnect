@@ -534,26 +534,37 @@ export async function printTestPage(settings: Settings): Promise<PrintResult> {
 export async function printSale(
   sale: SaleRecord,
   settings: Settings,
-  options: { printReceipt?: boolean } = {}
+  options: { printReceipt?: boolean; printVouchers?: boolean } = {}
 ): Promise<PrintResult> {
-  const jobs: PrintJobItem[] = []
+  // Wertbons werden beim Verkauf immer gedruckt; der kombinierte Kassenbon ist eine bewusste
+  // Extra-Aktion über einen eigenen Knopf und deshalb standardmäßig aus.
+  const printReceipt = options.printReceipt ?? false
+  const printVouchers = options.printVouchers ?? true
+  if (!printReceipt && !printVouchers) return { ok: true, jobs: [] }
 
-  if (options.printReceipt !== false) {
-    const receiptSession = createPrinterSession(settings)
-    fillReceipt(receiptSession.printer, settings, sale)
-    jobs.push(await runJob(receiptSession, 'receipt'))
+  // Ein Verkauf mit mehreren Artikeln braucht mehrere Wertbons - vorher hat jeder einzelne Bon
+  // (und der Kassenbon) eine eigene Druckerverbindung auf- und wieder abgebaut (bei seriell inkl.
+  // der 300ms-Settle-Pause aus SerialEscposInterface), was einen Verkauf mit z.B. 6 Artikeln spürbar
+  // ausbremste. ThermalPrinter puffert Inhalte über mehrere println()/cut()-Aufrufe hinweg, bis
+  // execute() aufgerufen wird - hier also alles in einen Puffer schreiben (inkl. der Schnitt-Befehle
+  // zwischen den einzelnen Bons) und am Ende in einem einzigen execute() senden: eine Verbindung,
+  // ein Rutsch, statt einer pro Bon.
+  const session = createPrinterSession(settings)
+
+  if (printReceipt) {
+    fillReceipt(session.printer, settings, sale)
   }
-
-  for (const item of sale.items) {
-    for (let i = 0; i < item.quantity; i++) {
-      const voucherNumber = item.voucherNumberStart + i
-      const voucherSession = createPrinterSession(settings)
-      fillVoucher(voucherSession.printer, settings, item.productName, item.priceCents, voucherNumber)
-      jobs.push(await runJob(voucherSession, 'voucher'))
+  if (printVouchers) {
+    for (const item of sale.items) {
+      for (let i = 0; i < item.quantity; i++) {
+        const voucherNumber = item.voucherNumberStart + i
+        fillVoucher(session.printer, settings, item.productName, item.priceCents, voucherNumber)
+      }
     }
   }
 
-  return { ok: jobs.every((j) => j.ok), jobs }
+  const job = await runJob(session, printReceipt ? 'receipt' : 'voucher')
+  return { ok: job.ok, jobs: [job] }
 }
 
 export async function printJournalReport(

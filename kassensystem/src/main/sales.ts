@@ -3,7 +3,7 @@ import { listProducts, getPfandProduct } from './products'
 import { expandCart, cartTotalCents, changeCents } from '../shared/cart'
 import type { CreateSaleInput, SaleItemRecord, SaleRecord } from '../shared/types'
 
-export function createSale(input: Omit<CreateSaleInput, 'printReceipt'>): SaleRecord {
+export function createSale(input: CreateSaleInput): SaleRecord {
   const products = listProducts()
   const pfand = getPfandProduct()
   const lines = expandCart(input.lines, products, pfand)
