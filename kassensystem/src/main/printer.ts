@@ -64,12 +64,17 @@ function toHex(n: number): string {
 // clearly doesn't implement the codepage table node-thermal-printer assumes. ASCII sidesteps the
 // whole class of codepage/font-table mismatches, on this printer and any other.
 function formatEuro(cents: number): string {
-  return (cents / 100).toFixed(2).replace('.', ',') + ' EUR'
+  return (cents / 100).toFixed(2).replace('.', ',') + ' Euro'
 }
 
 function formatDateTime(d: Date): string {
   const pad = (n: number): string => String(n).padStart(2, '0')
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+function formatDate(d: Date): string {
+  const pad = (n: number): string => String(n).padStart(2, '0')
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`
 }
 
 /**
@@ -338,32 +343,25 @@ function fillVoucher(
 ): void {
   printer.alignCenter()
   printer.bold(true)
-  printer.setTextDoubleHeight()
   printer.println(settings.titleLine1)
   if (settings.titleLine2) printer.println(settings.titleLine2)
-  printer.setTextNormal()
   printer.bold(false)
   printer.newLine()
-  printer.setTextDoubleHeight()
   printer.bold(true)
   printer.println(productName)
-  printer.setTextNormal()
   printer.bold(false)
   printer.println(formatEuro(priceCents))
   printer.newLine()
   printer.alignLeft()
-  printer.println(formatDateTime(new Date()))
-  printer.println(`Kasse ${settings.registerNumber} - No. ${voucherNumber}`)
+  printer.println(`${formatDate(new Date())} # Kasse ${settings.registerNumber} - No. ${voucherNumber}`)
   printer.partialCut()
 }
 
 function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleRecord): void {
   printer.alignCenter()
   printer.bold(true)
-  printer.setTextDoubleHeight()
   printer.println(settings.titleLine1)
   if (settings.titleLine2) printer.println(settings.titleLine2)
-  printer.setTextNormal()
   printer.bold(false)
   printer.newLine()
   printer.println(settings.orgName)
@@ -373,28 +371,23 @@ function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleReco
   printer.newLine()
   printer.alignLeft()
   printer.drawLine()
-  printer.newLine()
+  // Nur für diese feste, kurze Kopfzeile sicher: table() teilt die Breite gleichmäßig ohne
+  // Umbruch-Erkennung, bei variabler Artikelnamenlänge (siehe unten) wäre das riskant.
+  printer.table(['Anz.', 'Artikel', 'Preis', 'Summe'])
+  printer.drawLine()
 
   for (const item of sale.items) {
     printer.println(`${item.quantity} x ${item.productName}`)
-    const lineTotal = `${formatEuro(item.priceCents * item.quantity)} ${item.taxClass}`
-    // Für Menge 1 wäre "Einzelpreis = Gesamtpreis" reine Wiederholung derselben Zahl - nur ab
-    // Menge 2 ist der Einzelpreis eine zusätzliche Information, die es wert ist, gedruckt zu werden.
-    if (item.quantity > 1) {
-      printer.leftRight(`  ${formatEuro(item.priceCents)} =`, lineTotal)
-    } else {
-      printer.leftRight('', lineTotal)
-    }
+    printer.leftRight(
+      `  ${formatEuro(item.priceCents)} =`,
+      `${formatEuro(item.priceCents * item.quantity)} ${item.taxClass}`
+    )
   }
 
-  printer.newLine()
   printer.drawLine()
   printer.bold(true)
   printer.leftRight('Summe:', formatEuro(sale.totalCents))
   printer.bold(false)
-  printer.leftRight('Gegeben:', formatEuro(sale.cashReceivedCents))
-  printer.leftRight('Rückgeld:', formatEuro(sale.changeCents))
-  printer.newLine()
   printer.drawLine()
 
   const breakdown = taxBreakdown(
@@ -404,12 +397,7 @@ function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleReco
   printTaxBreakdown(printer, breakdown)
   printer.newLine()
 
-  printer.alignCenter()
-  printer.println('Vielen Dank und schönes Fest!')
-  printer.alignLeft()
-  printer.newLine()
-  printer.println(formatDateTime(new Date(sale.createdAt)))
-  printer.println(`Kasse ${settings.registerNumber} - No. ${sale.receiptNumber}`)
+  printer.println(`${formatDate(new Date(sale.createdAt))} # Kasse ${settings.registerNumber} - No. ${sale.receiptNumber}`)
   printer.cut()
 }
 
