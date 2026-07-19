@@ -347,7 +347,9 @@ function fillVoucher(
 ): void {
   printer.alignCenter()
   printer.bold(true)
+  printer.setTextDoubleHeight()
   printer.println(settings.titleLine1)
+  printer.setTextNormal()
   printer.bold(false)
   if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.newLine()
@@ -366,7 +368,9 @@ function fillVoucher(
 function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleRecord): void {
   printer.alignCenter()
   printer.bold(true)
+  printer.setTextDoubleHeight()
   printer.println(settings.titleLine1)
+  printer.setTextNormal()
   printer.bold(false)
   if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.newLine()
@@ -382,16 +386,23 @@ function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleReco
   printer.table(['Anz.', 'Artikel', 'Preis', 'Summe'])
   printer.drawLine()
 
-  // Der Artikelname bleibt auf einer eigenen vollbreiten Zeile (beliebig lang, siehe oben), die
-  // Preis-/Summe-Zeile darunter wird aber exakt auf dieselben Spaltengrenzen wie die Kopfzeile
-  // ausgerichtet (PRINTER_WIDTH / 4 je Spalte), damit die Beträge wirklich unter "Preis"/"Summe"
-  // stehen statt nur irgendwo rechtsbündig in der Zeile.
+  // Preis/Summe sitzen exakt auf denselben Spaltengrenzen wie die Kopfzeile (PRINTER_WIDTH / 4 je
+  // Spalte), Menge+Artikel füllen die ersten beiden Spalten gemeinsam. Passt Name+Menge dort nicht
+  // rein (Produktnamen sind frei eingebbar und unbegrenzt lang), weicht nur diese eine Zeile auf
+  // das alte zweizeilige Format aus - sicherer als Kürzen oder ein Zeilenumbruch, den der Drucker
+  // selbst nicht sauber beherrscht (siehe frühere PRs zur 44-Spalten-Grenze).
   const columnWidth = PRINTER_WIDTH / 4
+  const nameColumnWidth = columnWidth * 2
   for (const item of sale.items) {
-    printer.println(`${item.quantity} x ${item.productName}`)
+    const qtyName = `${item.quantity} x ${item.productName}`
     const unitCell = formatAmount(item.priceCents).padEnd(columnWidth)
     const totalCell = `${formatAmount(item.priceCents * item.quantity)} ${item.taxClass}`
-    printer.println(' '.repeat(columnWidth * 2) + unitCell + totalCell)
+    if (qtyName.length <= nameColumnWidth) {
+      printer.println(qtyName.padEnd(nameColumnWidth) + unitCell + totalCell)
+    } else {
+      printer.println(qtyName)
+      printer.println(' '.repeat(nameColumnWidth) + unitCell + totalCell)
+    }
   }
 
   printer.drawLine()
