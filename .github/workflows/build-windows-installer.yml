@@ -1,0 +1,40 @@
+name: Windows-Installer bauen
+
+# Native Module (better-sqlite3, usb, serialport) müssen für Electrons ABI und für Windows selbst
+# kompiliert werden - das funktioniert zuverlässig nur auf einem echten Windows-Rechner (oder
+# Runner), nicht per Cross-Build von Linux/macOS aus. Dieser Workflow baut deshalb direkt auf
+# windows-latest und stellt den fertigen Installer als Download bereit.
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "kassensystem/**"
+      - ".github/workflows/build-windows-installer.yml"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: kassensystem
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: kassensystem/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows installer
+        run: npm run dist:win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kassensystem-windows-installer
+          path: kassensystem/dist/*.exe
+          if-no-files-found: error
