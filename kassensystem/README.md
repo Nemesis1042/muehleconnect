@@ -62,6 +62,13 @@ Das erzeugt im Ordner `dist/` eine Installer-Datei (`Kassensystem Dobelmühle Se
 Diese Datei auf dem Kassen-Laptop doppelklicken und installieren — danach ist die App über das
 Startmenü aufrufbar, ganz ohne Node.js oder Terminal.
 
+> `npm run dist:win` muss auf einem echten Windows-Rechner laufen (nicht per Cross-Build von
+> Linux/macOS aus) — `better-sqlite3`, `usb` und `serialport` sind native Module, die für Windows
+> selbst kompiliert werden müssen. Wer keinen Windows-Rechner griffbereit hat: Der Workflow
+> "Windows-Installer bauen" (`.github/workflows/build-windows-installer.yml`) baut den Installer
+> automatisch auf einem Windows-GitHub-Runner — im GitHub-Repo unter "Actions" manuell auslösen
+> ("Run workflow"), der fertige `.exe` steht danach als Artifact zum Herunterladen bereit.
+
 **Linux:**
 
 ```bash
