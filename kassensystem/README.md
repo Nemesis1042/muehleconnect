@@ -60,7 +60,8 @@ npm run dist:win
 
 Das erzeugt im Ordner `dist/` eine Installer-Datei (`Kassensystem Dobelmühle Setup x.x.x.exe`).
 Diese Datei auf dem Kassen-Laptop doppelklicken und installieren — danach ist die App über das
-Startmenü aufrufbar, ganz ohne Node.js oder Terminal.
+Startmenü aufrufbar, ganz ohne Node.js oder Terminal. Die Installation läuft **pro Nutzerkonto**
+(nicht systemweit) und braucht deshalb **keine Administratorrechte**.
 
 > `npm run dist:win` muss auf einem echten Windows-Rechner laufen (nicht per Cross-Build von
 > Linux/macOS aus) — `better-sqlite3`, `usb` und `serialport` sind native Module, die für Windows
