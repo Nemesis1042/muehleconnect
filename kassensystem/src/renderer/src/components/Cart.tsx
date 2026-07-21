@@ -14,9 +14,9 @@ export default function Cart({ lines, totalCents, onRemoveOne, onCheckout }: Pro
       <h2 className="cart-title">Warenkorb</h2>
       <div className="cart-lines">
         {lines.length === 0 && <p className="cart-empty">Noch keine Artikel ausgewählt.</p>}
-        {lines.map((line) => (
+        {lines.map((line, index) => (
           <div
-            key={`${line.productId}-${line.isDeposit ? 'pfand' : 'item'}`}
+            key={`${line.productId}-${line.isDeposit ? 'pfand' : 'item'}-${index}`}
             className={`cart-line${line.isDeposit ? ' cart-line-deposit' : ''}`}
           >
             {line.isDeposit ? (
