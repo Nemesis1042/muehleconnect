@@ -1,0 +1,8 @@
+# Generated exports from the Kassensystem "Datensicherung"/export feature (CSV/Excel/PDF sales
+# exports and DB backups) default to a filename like kassensystem-verkaeufe-YYYY-MM-DD.* or
+# kassensystem-sicherung-YYYY-MM-DD.db and can end up saved at the repo root if the save dialog's
+# working directory isn't changed - these are user data, never meant to be version controlled.
+/kassensystem-verkaeufe-*.csv
+/kassensystem-verkaeufe-*.xlsx
+/kassensystem-verkaeufe-*.pdf
+/kassensystem-sicherung-*.db
