@@ -360,13 +360,20 @@ function fillVoucher(
   if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.newLine()
   printer.bold(true)
-  printer.setTextDoubleHeight()
+  // Double-width text halves the usable line capacity (44 columns -> ~22 at double width); a name
+  // longer than that would wrap mid-word on the real printer hardware (the same class of bug fixed
+  // multiple times elsewhere in this file), so only short names get the extra-large quad size.
+  if (productName.length <= PRINTER_WIDTH / 2) {
+    printer.setTextQuadArea()
+  } else {
+    printer.setTextDoubleHeight()
+  }
   printer.println(productName)
   printer.setTextNormal()
   printer.bold(false)
   printer.println(formatEuro(priceCents))
   printer.newLine()
-  printer.alignLeft()
+  printer.alignCenter()
   printer.println(`${formatDate(new Date())} # Kasse ${settings.registerNumber} - No. ${voucherNumber}`)
   printer.partialCut()
 }
@@ -424,19 +431,27 @@ function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleReco
   printTaxBreakdown(printer, breakdown)
   printer.newLine()
 
+  printer.alignCenter()
   printer.println(`${formatDate(new Date(sale.createdAt))} # Kasse ${settings.registerNumber} - No. ${sale.receiptNumber}`)
   printer.cut()
 }
 
+// Fixed column width (same PRINTER_WIDTH / 4 split as the item table above) so every value starts
+// exactly under its header word regardless of how many digits the amount has - ad-hoc spacing
+// between cells drifts out of alignment as soon as amounts differ in length.
 function printTaxBreakdown(
   printer: ThermalPrinter,
   breakdown: ReturnType<typeof taxBreakdown>
 ): void {
-  printer.println('MwSt   Netto     MwSt      Brutto')
+  const columnWidth = PRINTER_WIDTH / 4
+  printer.println(
+    'MwSt'.padEnd(columnWidth) + 'Netto'.padEnd(columnWidth) + 'MwSt'.padEnd(columnWidth) + 'Brutto'
+  )
   for (const b of breakdown) {
-    printer.println(
-      `${b.taxClass} ${b.ratePercent}%  ${formatEuro(b.netCents)}   ${formatEuro(b.taxCents)}   ${formatEuro(b.grossCents)}`
-    )
+    const classCell = `${b.taxClass} ${b.ratePercent}%`.padEnd(columnWidth)
+    const netCell = formatEuro(b.netCents).padEnd(columnWidth)
+    const taxCell = formatEuro(b.taxCents).padEnd(columnWidth)
+    printer.println(classCell + netCell + taxCell + formatEuro(b.grossCents))
   }
 }
 
@@ -659,7 +674,11 @@ export async function printTestPage(settings: Settings): Promise<PrintResult> {
   session.printer.bold(true)
   session.printer.println('Testdruck')
   session.printer.bold(false)
+  session.printer.bold(true)
+  session.printer.setTextDoubleHeight()
   session.printer.println(settings.titleLine1)
+  session.printer.setTextNormal()
+  session.printer.bold(false)
   session.printer.newLine()
   session.printer.println(formatDateTime(new Date()))
   session.printer.cut()
