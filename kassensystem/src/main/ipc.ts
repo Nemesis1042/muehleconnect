@@ -13,11 +13,18 @@ import { getJournal } from './journal'
 import {
   listSerialPorts,
   listUsbPrinterDevices,
+  printBaudTestSlips,
   printJournalReport,
   printSale,
-  printTestPage
+  printTestPage,
+  probeSerialBaudRate
 } from './printer'
-import { exportDatabaseToFile, getLastAutoBackup, runAutoBackup } from './backup'
+import {
+  exportDatabaseToFile,
+  getLastAutoBackup,
+  restoreDatabaseFromFile,
+  runAutoBackup
+} from './backup'
 import { exportSalesToCsv, exportSalesToExcel, exportSalesToPdf } from './export'
 import type { CreateSaleInput, PrintSaleOptions, ProductInput } from '../shared/types'
 
@@ -49,6 +56,10 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('printer:listDevices', () => listUsbPrinterDevices())
   ipcMain.handle('printer:listSerialPorts', () => listSerialPorts())
   ipcMain.handle('printer:testPrint', () => printTestPage(getSettings()))
+  ipcMain.handle('printer:probeBaudRate', (_e, path: string) => probeSerialBaudRate(path))
+  ipcMain.handle('printer:printBaudTestSlips', (_e, path: string) =>
+    printBaudTestSlips(path, getSettings())
+  )
 
   ipcMain.handle('settings:get', () => getSettings())
   ipcMain.handle('settings:update', (_e, input) => updateSettings(input))
@@ -60,6 +71,7 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('backup:exportToFile', () => exportDatabaseToFile())
+  ipcMain.handle('backup:restoreFromFile', () => restoreDatabaseFromFile())
   ipcMain.handle('backup:getLastAuto', () => getLastAutoBackup())
   ipcMain.handle('backup:exportCsv', () => exportSalesToCsv())
   ipcMain.handle('backup:exportExcel', () => exportSalesToExcel())

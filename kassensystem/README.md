@@ -149,11 +149,17 @@ eines Druckerherstellers.
    COM-Port ablesen (z.B. `COM3`).
 
 **Beide Systeme:** In der Kassensystem-App unter "Einstellungen" im Abschnitt "Seriell" auf
-"Serielle Anschlüsse suchen" klicken, den Port auswählen und die **Baudrate** prüfen — Standard
-ist 9600, viele Drucker weichen aber davon ab (bei einem bereits im Einsatz getesteten Gerät waren
-es z.B. 19200). Steht die Baudrate nicht auf dem Typenschild/im Handbuch oder an DIP-Schaltern am
-Gerät, hilft Ausprobieren: mit "Testdruck" prüfen, ob lesbarer Text herauskommt (falsche Baudrate
-liefert entweder gar nichts oder Zeichenmüll).
+"Serielle Anschlüsse suchen" klicken und den Port auswählen. Die **Baudrate** muss zum Drucker
+passen (Standard wäre 9600, viele Drucker weichen aber davon ab — bei einem bereits im Einsatz
+getesteten Gerät waren es z.B. 19200; ein anderes Gerät mit demselben Adapter-Typ brauchte 9600).
+Statt die Baudrate manuell auszuprobieren, gibt es dafür den Button **"Baudrate automatisch
+einstellen"**: Die App versucht zuerst still eine Erkennung (funktioniert nur, wenn das Kabel eine
+Rückleitung hat — bei vielen günstigen Adaptern nicht der Fall) und druckt andernfalls ein paar
+kurze Testzettel, je einer pro üblicher Baudrate. Auf dem Testzettel, der lesbar ist, klickt man
+dann auf die passende Zahl — der Rest passiert automatisch. Beim allerersten Start der App mit
+einem gerade eingerichteten seriellen Anschluss (noch keine Baudrate bestätigt) öffnet sich dieser
+Assistent zusätzlich automatisch als Dialog, damit auch beim Verleih an einen anderen Ort niemand
+in den Einstellungen danach suchen muss.
 
 > **Nur der Anfang des Ausdrucks ist Zeichenmüll, der Rest ist lesbar?** Das ist kein
 > Baudrate-Problem, sondern ein bekannter USB-zu-Seriell-Adapter-Effekt: Manche Adapter (z.B.
@@ -175,6 +181,10 @@ Mehrwertsteuersatz und ggf. Pfandbeträge eintragen, nicht benötigte Beispielpr
 Unter "Einstellungen" außerdem Kopfzeile (z. B. Veranstaltungsname), Adresse der Organisation und
 Kassennummer eintragen — diese Angaben erscheinen auf jedem Bon.
 
+Geht während des Fests ein Produkt aus, muss dafür nicht extra in die Produktverwaltung gewechselt
+werden: Jede Produktkachel auf der Kassen-Seite hat oben links einen kleinen Knopf, mit dem sich
+das Produkt direkt als "Ausverkauft" markieren (und genauso einfach wieder aktivieren) lässt.
+
 **Laufen mehrere Kassen-Laptops gleichzeitig** (mehrere Verkaufsstellen am selben Fest): Jeder
 Laptop braucht in "Einstellungen" eine **eigene, eindeutige Kassennummer** (1, 2, 3, …). Sie
 erscheint auf jedem Bon/Wertbon (z. B. "Kasse 1 – No. 177") und macht die sonst pro Gerät bei 1
@@ -194,6 +204,11 @@ ein verschütteter Drink oder ein Diebstahl am Verkaufstag nicht den ganzen Tage
 - **Manuell:** Unter "Einstellungen" → "Datensicherung" → "Jetzt manuell sichern" lässt sich
   jederzeit eine Kopie an einen frei wählbaren Ort speichern (z. B. auf einen USB-Stick) — sinnvoll
   z. B. am Ende jedes Verkaufstages.
+- **Wiederherstellen:** Über denselben Abschnitt → "Aus Sicherung wiederherstellen…" lässt sich
+  eine zuvor gesicherte `.db`-Datei zurückspielen — z. B. wenn der Kassen-Laptop getauscht werden
+  muss oder die Datenbank beschädigt wurde. **Das überschreibt alle aktuellen Daten unwiderruflich**
+  und startet die App danach automatisch neu; die App fragt vorher deutlich nach Bestätigung und
+  prüft die gewählte Datei, bevor sie irgendetwas überschreibt.
 
 Zusätzlich zur reinen SQLite-Sicherung gibt es im selben Abschnitt "Verkaufsdaten exportieren" —
 alle Verkäufe (nicht nur ein Tag) als lesbare Tabelle, z. B. für Nachbereitung oder Buchhaltung:

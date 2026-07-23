@@ -100,6 +100,8 @@ export interface Settings {
   printerProductId: string
   printerSerialPath: string
   printerSerialBaudRate: number
+  /** Whether a baud rate has ever been successfully confirmed (silent probe or guided pick). */
+  printerSerialBaudConfirmed: boolean
 }
 
 export interface TaxBreakdownEntry {
@@ -154,6 +156,23 @@ export interface PrintResult {
   jobs: PrintJobItem[]
 }
 
+export interface BaudProbeResult {
+  ok: boolean
+  baudRate?: number
+  candidatesTried: number[]
+}
+
+export interface BaudTestSlipAttempt {
+  baudRate: number
+  ok: boolean
+  error?: string
+}
+
+export interface BaudGuidedTestResult {
+  ok: boolean
+  attempts: BaudTestSlipAttempt[]
+}
+
 export interface BackupInfo {
   path: string
   /** ISO timestamp of the last automatic backup. */
@@ -184,6 +203,8 @@ export interface KassenApi {
     listDevices(): Promise<UsbDeviceInfo[]>
     listSerialPorts(): Promise<SerialPortInfo[]>
     testPrint(): Promise<PrintResult>
+    probeBaudRate(path: string): Promise<BaudProbeResult>
+    printBaudTestSlips(path: string): Promise<BaudGuidedTestResult>
   }
   settings: {
     get(): Promise<Settings>
@@ -195,6 +216,7 @@ export interface KassenApi {
   }
   backup: {
     exportToFile(): Promise<BackupResult>
+    restoreFromFile(): Promise<BackupResult>
     getLastAuto(): Promise<BackupInfo | null>
     exportCsv(): Promise<BackupResult>
     exportExcel(): Promise<BackupResult>

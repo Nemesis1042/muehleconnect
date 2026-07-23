@@ -3,6 +3,9 @@ import { usb } from 'usb'
 import { SerialPort } from 'serialport'
 import { taxBreakdown } from '../shared/cart'
 import type {
+  BaudGuidedTestResult,
+  BaudProbeResult,
+  BaudTestSlipAttempt,
   JournalReport,
   PrintJobItem,
   PrintResult,
@@ -11,6 +14,7 @@ import type {
   Settings,
   UsbDeviceInfo
 } from '../shared/types'
+import { BAUD_RATE_CANDIDATES, STATUS_QUERY_BYTES, isPlausibleStatusResponse } from '../shared/serialProbe'
 
 // The 'usb' package's .d.ts doesn't reliably surface the full WebUSB device shape (e.g.
 // `transferOut`) through its public export, so we declare the slice we actually use ourselves;
@@ -258,11 +262,10 @@ function buildInterface(
   return new DryRunInterface()
 }
 
-function createPrinterSession(settings: Settings): PrinterSession {
-  const iface = buildInterface(settings)
-  const dryRun = iface instanceof DryRunInterface
-
-  const printer = new ThermalPrinter({
+function buildThermalPrinter(
+  iface: UsbEscposInterface | SerialEscposInterface | DryRunInterface
+): ThermalPrinter {
+  return new ThermalPrinter({
     type: PrinterTypes.EPSON,
     // node-thermal-printer's runtime accepts an Interface object; its .d.ts just doesn't model that.
     interface: iface as unknown as string,
@@ -273,8 +276,11 @@ function createPrinterSession(settings: Settings): PrinterSession {
     // and don't depend on this codepage's currency support at all.
     characterSet: CharacterSet.PC850_MULTILINGUAL
   })
+}
 
-  return { printer, dryRun }
+function createPrinterSession(settings: Settings): PrinterSession {
+  const iface = buildInterface(settings)
+  return { printer: buildThermalPrinter(iface), dryRun: iface instanceof DryRunInterface }
 }
 
 /**
@@ -536,6 +542,115 @@ export async function listSerialPorts(): Promise<SerialPortInfo[]> {
   // /dev/ttyS0 without any USB descriptor info is rare enough that a clean list wins out here.
   const isRecognized = (p: SerialPortInfo): boolean => Boolean(p.manufacturer || p.vendorId)
   return infos.filter(isRecognized).sort((a, b) => a.path.localeCompare(b.path))
+}
+
+const BAUD_PROBE_RESPONSE_WINDOW_MS = 250
+// Bounds the whole per-candidate attempt (open + settle + write/drain + response window + slack),
+// so a wedged port/driver can never stall the candidate loop - it just moves on to the next rate.
+const BAUD_PROBE_WATCHDOG_MS = 2000
+
+// Opens its own port and talks raw bytes directly - deliberately separate from
+// SerialEscposInterface, which stays TX-only and untouched for the real print path. Never rejects:
+// every failure mode (open error, write error, timeout) resolves an empty buffer instead, so the
+// caller's candidate loop always advances.
+async function probeBaudRateOnce(path: string, baudRate: number): Promise<Buffer> {
+  return new Promise((resolve) => {
+    let settled = false
+    const chunks: Buffer[] = []
+
+    const port = new SerialPort(
+      { path, baudRate, dataBits: 8, parity: 'none', stopBits: 1 },
+      (openErr) => {
+        if (openErr) finish()
+      }
+    )
+
+    const watchdog = setTimeout(finish, BAUD_PROBE_WATCHDOG_MS)
+
+    function finish(): void {
+      if (settled) return
+      settled = true
+      clearTimeout(watchdog)
+      try {
+        port.close()
+      } catch {
+        /* Port ggf. schon geschlossen/getrennt - ignorieren, wir geben ohnehin nur zurück, was da ist. */
+      }
+      resolve(Buffer.concat(chunks))
+    }
+
+    port.once('error', finish)
+    port.on('data', (chunk: Buffer) => chunks.push(chunk))
+
+    port.once('open', () => {
+      // Gleiche FTDI-DTR/RTS-Settle-Begründung wie in SerialEscposInterface.execute() - macht den
+      // Probe-Versuch repräsentativ für den echten Druckweg, nicht nur "lässt sich der Port öffnen".
+      setTimeout(() => {
+        port.write(STATUS_QUERY_BYTES, (writeErr) => {
+          if (writeErr) {
+            finish()
+            return
+          }
+          port.drain(() => setTimeout(finish, BAUD_PROBE_RESPONSE_WINDOW_MS))
+        })
+      }, SERIAL_OPEN_SETTLE_MS)
+    })
+  })
+}
+
+/**
+ * Stiller Erkennungsversuch: fragt bei jeder Kandidaten-Baudrate den ESC/POS-Druckerstatus ab und
+ * hört kurz auf eine Antwort. Funktioniert nur, wenn das Kabel/der Adapter eine Rückleitung (RX)
+ * hat - bei vielen günstigen USB-Seriell-Kabeln ist das nicht der Fall, dann liefert das schlicht
+ * kein Ergebnis (kein Fehler) und der Aufrufer fällt auf den geführten Testdruck zurück.
+ */
+export async function probeSerialBaudRate(path: string): Promise<BaudProbeResult> {
+  const candidatesTried: number[] = []
+  for (const candidate of BAUD_RATE_CANDIDATES) {
+    candidatesTried.push(candidate)
+    const response = await probeBaudRateOnce(path, candidate)
+    if (isPlausibleStatusResponse(response)) {
+      return { ok: true, baudRate: candidate, candidatesTried }
+    }
+  }
+  return { ok: false, candidatesTried }
+}
+
+function fillBaudTestSlip(printer: ThermalPrinter, settings: Settings, baudRate: number): void {
+  printer.alignCenter()
+  printer.bold(true)
+  printer.println('Test Baudrate')
+  printer.bold(false)
+  printer.println(`${baudRate} Baud`)
+  printer.newLine()
+  printer.println(settings.titleLine1)
+  printer.cut()
+}
+
+/**
+ * Geführter Fallback, falls der stille Versuch nichts findet: druckt für jede Kandidaten-Baudrate
+ * einen eigenen, kurzen Zettel (eigene SerialEscposInterface-Instanz + eigener execute()-Aufruf pro
+ * Kandidat, da die Baudrate eine Eigenschaft der Port-Verbindung selbst ist - lässt sich nicht in
+ * einem gemeinsamen Puffer/einer Verbindung für mehrere Raten senden). Der Mensch liest ab, welcher
+ * Zettel lesbar war. Ein Fehlschlag bei einem Kandidaten bricht die übrigen nicht ab.
+ */
+export async function printBaudTestSlips(
+  path: string,
+  settings: Settings
+): Promise<BaudGuidedTestResult> {
+  const attempts: BaudTestSlipAttempt[] = []
+  for (const baudRate of BAUD_RATE_CANDIDATES) {
+    const iface = new SerialEscposInterface(path, baudRate)
+    const printer = buildThermalPrinter(iface)
+    fillBaudTestSlip(printer, settings, baudRate)
+    try {
+      await printer.execute()
+      attempts.push({ baudRate, ok: true })
+    } catch (err) {
+      attempts.push({ baudRate, ok: false, error: describePrinterError(err) })
+    }
+  }
+  return { ok: attempts.some((a) => a.ok), attempts }
 }
 
 export async function printTestPage(settings: Settings): Promise<PrintResult> {

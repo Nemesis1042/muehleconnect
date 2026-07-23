@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { BackupInfo, Settings, SerialPortInfo, UsbDeviceInfo } from '@shared/types'
+import BaudRateWizard from '../components/BaudRateWizard'
 
 function formatBackupTimestamp(iso: string): string {
   const d = new Date(iso)
@@ -49,7 +50,9 @@ export default function Einstellungen(): JSX.Element {
   const [lastBackup, setLastBackup] = useState<BackupInfo | null>(null)
   const [backupResult, setBackupResult] = useState<string | null>(null)
   const [backingUp, setBackingUp] = useState(false)
+  const [restoring, setRestoring] = useState(false)
   const [exportingFormat, setExportingFormat] = useState<'csv' | 'excel' | 'pdf' | null>(null)
+  const [serialBusy, setSerialBusy] = useState(false)
 
   useEffect(() => {
     void window.kassen.settings.get().then(setSettings)
@@ -72,6 +75,24 @@ export default function Einstellungen(): JSX.Element {
       )
     } finally {
       setBackingUp(false)
+    }
+  }
+
+  async function handleRestoreBackup(): Promise<void> {
+    const confirmed = window.confirm(
+      'Achtung: Das überschreibt ALLE aktuellen Kassendaten (Verkäufe, Produkte, Einstellungen) ' +
+        'mit dem Inhalt der ausgewählten Sicherungsdatei und startet die App danach neu. Das kann ' +
+        'nicht rückgängig gemacht werden. Trotzdem fortfahren?'
+    )
+    if (!confirmed) return
+    setRestoring(true)
+    setBackupResult(null)
+    const result = await window.kassen.backup.restoreFromFile()
+    // Bei Erfolg beendet sich die App im Main-Prozess selbst (app.exit nach app.relaunch) - dieser
+    // Code-Pfad läuft dann gar nicht mehr weiter. Nur der Fehlerfall kommt hier tatsächlich an.
+    if (!result.ok) {
+      setBackupResult(`Wiederherstellung fehlgeschlagen: ${result.error}`)
+      setRestoring(false)
     }
   }
 
@@ -118,6 +139,14 @@ export default function Einstellungen(): JSX.Element {
     setSettings(updated)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function handleBaudRateConfirmed(baudRate: number): Promise<void> {
+    const updated = await window.kassen.settings.update({
+      printerSerialBaudRate: baudRate,
+      printerSerialBaudConfirmed: true
+    })
+    setSettings(updated)
   }
 
   async function handleTestPrint(): Promise<void> {
@@ -203,6 +232,13 @@ export default function Einstellungen(): JSX.Element {
         </p>
         <button className="button-secondary" onClick={() => void handleExportBackup()} disabled={backingUp}>
           {backingUp ? 'Sichere…' : 'Jetzt manuell sichern (z. B. auf USB-Stick)'}
+        </button>
+        <button
+          className="button-secondary"
+          onClick={() => void handleRestoreBackup()}
+          disabled={restoring || backingUp}
+        >
+          {restoring ? 'Wird wiederhergestellt…' : 'Aus Sicherung wiederherstellen…'}
         </button>
 
         <h3>Verkaufsdaten exportieren</h3>
@@ -345,7 +381,15 @@ export default function Einstellungen(): JSX.Element {
           })}
         </div>
 
-        <button className="button-secondary" onClick={() => void handleTestPrint()}>
+        {settings.printerSerialPath && (
+          <BaudRateWizard
+            path={settings.printerSerialPath}
+            onConfirmed={(rate) => void handleBaudRateConfirmed(rate)}
+            onBusyChange={setSerialBusy}
+          />
+        )}
+
+        <button className="button-secondary" onClick={() => void handleTestPrint()} disabled={serialBusy}>
           Testdruck
         </button>
         {testResult && <p>{testResult}</p>}

@@ -27,7 +27,9 @@ const api: KassenApi = {
   printer: {
     listDevices: () => ipcRenderer.invoke('printer:listDevices'),
     listSerialPorts: () => ipcRenderer.invoke('printer:listSerialPorts'),
-    testPrint: () => ipcRenderer.invoke('printer:testPrint')
+    testPrint: () => ipcRenderer.invoke('printer:testPrint'),
+    probeBaudRate: (path: string) => ipcRenderer.invoke('printer:probeBaudRate', path),
+    printBaudTestSlips: (path: string) => ipcRenderer.invoke('printer:printBaudTestSlips', path)
   },
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
@@ -39,6 +41,7 @@ const api: KassenApi = {
   },
   backup: {
     exportToFile: () => ipcRenderer.invoke('backup:exportToFile'),
+    restoreFromFile: () => ipcRenderer.invoke('backup:restoreFromFile'),
     getLastAuto: () => ipcRenderer.invoke('backup:getLastAuto'),
     exportCsv: () => ipcRenderer.invoke('backup:exportCsv'),
     exportExcel: () => ipcRenderer.invoke('backup:exportExcel'),
