@@ -344,6 +344,43 @@ async function runJob(session: PrinterSession, kind: PrintJobItem['kind']): Prom
   }
 }
 
+// Double-width text halves the usable line capacity (44 columns -> 22 at double width).
+const QUAD_LINE_WIDTH = PRINTER_WIDTH / 2
+
+// Breaks on word boundaries, never mid-word (mid-word wrapping on the real printer hardware is a
+// bug class this project has hit and fixed multiple times) - a text longer than one quad-size line
+// gets as many lines as it needs instead of falling back to a smaller size.
+function wrapForQuadWidth(text: string): string[] {
+  if (text.length <= QUAD_LINE_WIDTH) return [text]
+  const words = text.split(' ')
+  const lines: string[] = []
+  let current = ''
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word
+    if (candidate.length <= QUAD_LINE_WIDTH) {
+      current = candidate
+    } else {
+      if (current) lines.push(current)
+      current = word
+    }
+  }
+  if (current) lines.push(current)
+  return lines
+}
+
+// Shared "big, bold, wraps at word boundaries if needed" treatment for Titelzeile 1 (used
+// identically on Kassenbon, Wertbon and Testdruck) and the Wertbon product name, so both get
+// exactly the same size/wrap behavior.
+function printQuadBold(printer: ThermalPrinter, text: string): void {
+  printer.bold(true)
+  printer.setTextQuadArea()
+  for (const line of wrapForQuadWidth(text)) {
+    printer.println(line)
+  }
+  printer.setTextNormal()
+  printer.bold(false)
+}
+
 function fillVoucher(
   printer: ThermalPrinter,
   settings: Settings,
@@ -352,25 +389,10 @@ function fillVoucher(
   voucherNumber: number
 ): void {
   printer.alignCenter()
-  printer.bold(true)
-  printer.setTextDoubleHeight()
-  printer.println(settings.titleLine1)
-  printer.setTextNormal()
-  printer.bold(false)
+  printQuadBold(printer, settings.titleLine1)
   if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.newLine()
-  printer.bold(true)
-  // Double-width text halves the usable line capacity (44 columns -> ~22 at double width); a name
-  // longer than that would wrap mid-word on the real printer hardware (the same class of bug fixed
-  // multiple times elsewhere in this file), so only short names get the extra-large quad size.
-  if (productName.length <= PRINTER_WIDTH / 2) {
-    printer.setTextQuadArea()
-  } else {
-    printer.setTextDoubleHeight()
-  }
-  printer.println(productName)
-  printer.setTextNormal()
-  printer.bold(false)
+  printQuadBold(printer, productName)
   printer.println(formatEuro(priceCents))
   printer.newLine()
   printer.alignCenter()
@@ -380,11 +402,7 @@ function fillVoucher(
 
 function fillReceipt(printer: ThermalPrinter, settings: Settings, sale: SaleRecord): void {
   printer.alignCenter()
-  printer.bold(true)
-  printer.setTextDoubleHeight()
-  printer.println(settings.titleLine1)
-  printer.setTextNormal()
-  printer.bold(false)
+  printQuadBold(printer, settings.titleLine1)
   if (settings.titleLine2) printer.println(settings.titleLine2)
   printer.newLine()
   printer.println(settings.orgName)
@@ -674,11 +692,7 @@ export async function printTestPage(settings: Settings): Promise<PrintResult> {
   session.printer.bold(true)
   session.printer.println('Testdruck')
   session.printer.bold(false)
-  session.printer.bold(true)
-  session.printer.setTextDoubleHeight()
-  session.printer.println(settings.titleLine1)
-  session.printer.setTextNormal()
-  session.printer.bold(false)
+  printQuadBold(session.printer, settings.titleLine1)
   session.printer.newLine()
   session.printer.println(formatDateTime(new Date()))
   session.printer.cut()
