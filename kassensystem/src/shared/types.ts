@@ -216,6 +216,7 @@ export interface KassenApi {
   }
   backup: {
     exportToFile(): Promise<BackupResult>
+    restoreFromFile(): Promise<BackupResult>
     getLastAuto(): Promise<BackupInfo | null>
     exportCsv(): Promise<BackupResult>
     exportExcel(): Promise<BackupResult>

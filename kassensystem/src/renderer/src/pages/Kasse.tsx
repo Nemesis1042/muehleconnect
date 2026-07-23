@@ -44,8 +44,10 @@ export default function Kasse(): JSX.Element {
     return seen
   }, [products])
 
+  // Bewusst inklusive inaktiver Produkte: nur so lassen sich ausverkaufte Produkte direkt hier
+  // wieder aktivieren, statt den Umweg über die Produktverwaltung nehmen zu müssen.
   const visibleProducts = useMemo(
-    () => products.filter((p) => p.active && p.category === activeCategory),
+    () => products.filter((p) => p.category === activeCategory),
     [products, activeCategory]
   )
 
@@ -66,6 +68,11 @@ export default function Kasse(): JSX.Element {
 
   function addOne(productId: number): void {
     setRawCart((prev) => ({ ...prev, [productId]: (prev[productId] ?? 0) + 1 }))
+  }
+
+  async function toggleProductActive(productId: number, active: boolean): Promise<void> {
+    await window.kassen.products.update(productId, { active })
+    await loadProducts()
   }
 
   function removeOne(productId: number): void {
@@ -197,7 +204,11 @@ export default function Kasse(): JSX.Element {
               </button>
             ))}
           </div>
-          <ProductGrid products={visibleProducts} onAdd={addOne} />
+          <ProductGrid
+            products={visibleProducts}
+            onAdd={addOne}
+            onToggleActive={(id, active) => void toggleProductActive(id, active)}
+          />
         </div>
 
         <Cart

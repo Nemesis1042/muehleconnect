@@ -181,6 +181,10 @@ Mehrwertsteuersatz und ggf. Pfandbeträge eintragen, nicht benötigte Beispielpr
 Unter "Einstellungen" außerdem Kopfzeile (z. B. Veranstaltungsname), Adresse der Organisation und
 Kassennummer eintragen — diese Angaben erscheinen auf jedem Bon.
 
+Geht während des Fests ein Produkt aus, muss dafür nicht extra in die Produktverwaltung gewechselt
+werden: Jede Produktkachel auf der Kassen-Seite hat oben links einen kleinen Knopf, mit dem sich
+das Produkt direkt als "Ausverkauft" markieren (und genauso einfach wieder aktivieren) lässt.
+
 **Laufen mehrere Kassen-Laptops gleichzeitig** (mehrere Verkaufsstellen am selben Fest): Jeder
 Laptop braucht in "Einstellungen" eine **eigene, eindeutige Kassennummer** (1, 2, 3, …). Sie
 erscheint auf jedem Bon/Wertbon (z. B. "Kasse 1 – No. 177") und macht die sonst pro Gerät bei 1
@@ -200,6 +204,11 @@ ein verschütteter Drink oder ein Diebstahl am Verkaufstag nicht den ganzen Tage
 - **Manuell:** Unter "Einstellungen" → "Datensicherung" → "Jetzt manuell sichern" lässt sich
   jederzeit eine Kopie an einen frei wählbaren Ort speichern (z. B. auf einen USB-Stick) — sinnvoll
   z. B. am Ende jedes Verkaufstages.
+- **Wiederherstellen:** Über denselben Abschnitt → "Aus Sicherung wiederherstellen…" lässt sich
+  eine zuvor gesicherte `.db`-Datei zurückspielen — z. B. wenn der Kassen-Laptop getauscht werden
+  muss oder die Datenbank beschädigt wurde. **Das überschreibt alle aktuellen Daten unwiderruflich**
+  und startet die App danach automatisch neu; die App fragt vorher deutlich nach Bestätigung und
+  prüft die gewählte Datei, bevor sie irgendetwas überschreibt.
 
 Zusätzlich zur reinen SQLite-Sicherung gibt es im selben Abschnitt "Verkaufsdaten exportieren" —
 alle Verkäufe (nicht nur ein Tag) als lesbare Tabelle, z. B. für Nachbereitung oder Buchhaltung:

@@ -96,6 +96,41 @@
   text-align: center;
 }
 
+.product-tile {
+  position: relative;
+}
+
+.product-tile .product-button {
+  width: 100%;
+}
+
+.product-tile-inactive .product-button {
+  opacity: 0.5;
+}
+
+.product-sold-out-label {
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+.product-toggle-active {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.product-toggle-active:hover {
+  border-color: var(--color-primary);
+}
+
 /* Cart */
 
 .cart-panel {

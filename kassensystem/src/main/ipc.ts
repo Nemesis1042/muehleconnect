@@ -19,7 +19,12 @@ import {
   printTestPage,
   probeSerialBaudRate
 } from './printer'
-import { exportDatabaseToFile, getLastAutoBackup, runAutoBackup } from './backup'
+import {
+  exportDatabaseToFile,
+  getLastAutoBackup,
+  restoreDatabaseFromFile,
+  runAutoBackup
+} from './backup'
 import { exportSalesToCsv, exportSalesToExcel, exportSalesToPdf } from './export'
 import type { CreateSaleInput, PrintSaleOptions, ProductInput } from '../shared/types'
 
@@ -66,6 +71,7 @@ export function registerIpcHandlers(): void {
   })
 
   ipcMain.handle('backup:exportToFile', () => exportDatabaseToFile())
+  ipcMain.handle('backup:restoreFromFile', () => restoreDatabaseFromFile())
   ipcMain.handle('backup:getLastAuto', () => getLastAutoBackup())
   ipcMain.handle('backup:exportCsv', () => exportSalesToCsv())
   ipcMain.handle('backup:exportExcel', () => exportSalesToExcel())
