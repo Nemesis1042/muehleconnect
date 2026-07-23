@@ -22,7 +22,8 @@ export function getSettings(): Settings {
     printerVendorId: map.printerVendorId ?? '',
     printerProductId: map.printerProductId ?? '',
     printerSerialPath: map.printerSerialPath ?? '',
-    printerSerialBaudRate: Number(map.printerSerialBaudRate ?? 19200)
+    printerSerialBaudRate: Number(map.printerSerialBaudRate ?? 19200),
+    printerSerialBaudConfirmed: map.printerSerialBaudConfirmed === 'true'
   }
 }
 

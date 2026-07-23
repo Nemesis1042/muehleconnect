@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { BackupInfo, Settings, SerialPortInfo, UsbDeviceInfo } from '@shared/types'
+import BaudRateWizard from '../components/BaudRateWizard'
 
 function formatBackupTimestamp(iso: string): string {
   const d = new Date(iso)
@@ -50,6 +51,7 @@ export default function Einstellungen(): JSX.Element {
   const [backupResult, setBackupResult] = useState<string | null>(null)
   const [backingUp, setBackingUp] = useState(false)
   const [exportingFormat, setExportingFormat] = useState<'csv' | 'excel' | 'pdf' | null>(null)
+  const [serialBusy, setSerialBusy] = useState(false)
 
   useEffect(() => {
     void window.kassen.settings.get().then(setSettings)
@@ -118,6 +120,14 @@ export default function Einstellungen(): JSX.Element {
     setSettings(updated)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function handleBaudRateConfirmed(baudRate: number): Promise<void> {
+    const updated = await window.kassen.settings.update({
+      printerSerialBaudRate: baudRate,
+      printerSerialBaudConfirmed: true
+    })
+    setSettings(updated)
   }
 
   async function handleTestPrint(): Promise<void> {
@@ -345,7 +355,15 @@ export default function Einstellungen(): JSX.Element {
           })}
         </div>
 
-        <button className="button-secondary" onClick={() => void handleTestPrint()}>
+        {settings.printerSerialPath && (
+          <BaudRateWizard
+            path={settings.printerSerialPath}
+            onConfirmed={(rate) => void handleBaudRateConfirmed(rate)}
+            onBusyChange={setSerialBusy}
+          />
+        )}
+
+        <button className="button-secondary" onClick={() => void handleTestPrint()} disabled={serialBusy}>
           Testdruck
         </button>
         {testResult && <p>{testResult}</p>}

@@ -91,7 +91,8 @@ const DEFAULT_SETTINGS: Settings = {
   printerSerialPath: '',
   // Vorbelegt mit dem am Kassen-Laptop bestätigten Wert; der ESC/POS-Standard wäre 9600, aber
   // nicht jeder Drucker hält sich daran (Feld bleibt frei änderbar).
-  printerSerialBaudRate: 19200
+  printerSerialBaudRate: 19200,
+  printerSerialBaudConfirmed: false
 }
 
 const COUNTER_RECEIPT = 'counter_receipt_number'

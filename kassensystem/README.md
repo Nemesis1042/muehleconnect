@@ -149,11 +149,17 @@ eines Druckerherstellers.
    COM-Port ablesen (z.B. `COM3`).
 
 **Beide Systeme:** In der Kassensystem-App unter "Einstellungen" im Abschnitt "Seriell" auf
-"Serielle Anschlüsse suchen" klicken, den Port auswählen und die **Baudrate** prüfen — Standard
-ist 9600, viele Drucker weichen aber davon ab (bei einem bereits im Einsatz getesteten Gerät waren
-es z.B. 19200). Steht die Baudrate nicht auf dem Typenschild/im Handbuch oder an DIP-Schaltern am
-Gerät, hilft Ausprobieren: mit "Testdruck" prüfen, ob lesbarer Text herauskommt (falsche Baudrate
-liefert entweder gar nichts oder Zeichenmüll).
+"Serielle Anschlüsse suchen" klicken und den Port auswählen. Die **Baudrate** muss zum Drucker
+passen (Standard wäre 9600, viele Drucker weichen aber davon ab — bei einem bereits im Einsatz
+getesteten Gerät waren es z.B. 19200; ein anderes Gerät mit demselben Adapter-Typ brauchte 9600).
+Statt die Baudrate manuell auszuprobieren, gibt es dafür den Button **"Baudrate automatisch
+einstellen"**: Die App versucht zuerst still eine Erkennung (funktioniert nur, wenn das Kabel eine
+Rückleitung hat — bei vielen günstigen Adaptern nicht der Fall) und druckt andernfalls ein paar
+kurze Testzettel, je einer pro üblicher Baudrate. Auf dem Testzettel, der lesbar ist, klickt man
+dann auf die passende Zahl — der Rest passiert automatisch. Beim allerersten Start der App mit
+einem gerade eingerichteten seriellen Anschluss (noch keine Baudrate bestätigt) öffnet sich dieser
+Assistent zusätzlich automatisch als Dialog, damit auch beim Verleih an einen anderen Ort niemand
+in den Einstellungen danach suchen muss.
 
 > **Nur der Anfang des Ausdrucks ist Zeichenmüll, der Rest ist lesbar?** Das ist kein
 > Baudrate-Problem, sondern ein bekannter USB-zu-Seriell-Adapter-Effekt: Manche Adapter (z.B.
