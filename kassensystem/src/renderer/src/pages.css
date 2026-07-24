@@ -297,25 +297,6 @@
   border-color: var(--color-primary);
 }
 
-.keypad {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-  margin: 1rem 0;
-}
-
-.keypad-button {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 1.4rem 0;
-  font-size: 1.6rem;
-}
-
-.keypad-button:hover {
-  border-color: var(--color-primary);
-}
-
 .keypad-actions {
   display: flex;
   gap: 0.5rem;

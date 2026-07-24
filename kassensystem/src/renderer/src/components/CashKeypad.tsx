@@ -11,8 +11,6 @@ interface Props {
   onCancel: () => void
 }
 
-const KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', '⌫']
-
 // Übliche Scheine bis 50 € - größere Scheine (100/200/500) kommen beim Kassieren an einem
 // Fest-Stand praktisch nicht vor, deshalb bewusst nicht mit aufgenommen.
 const BILLS_CENTS = [500, 1000, 2000, 5000]
@@ -46,8 +44,8 @@ export default function CashKeypad({
     setInput((prev) => String((prev === '' ? 0 : Number(prev)) + cents))
   }
 
-  // Der erhaltene Betrag lässt sich zusätzlich zum Antippen der Ziffernblock-Buttons auch direkt
-  // über die Tastatur eingeben - Enter bestätigt, Escape bricht ab, wie bei jedem anderen Dialog.
+  // Der erhaltene Betrag wird über die Tastatur eingegeben (kein Ziffernblock auf dem Bildschirm
+  // mehr) - Enter bestätigt, Escape bricht ab, wie bei jedem anderen Dialog.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
       if (e.key >= '0' && e.key <= '9') {
@@ -106,13 +104,6 @@ export default function CashKeypad({
           ))}
         </div>
 
-        <div className="keypad">
-          {KEYS.map((k) => (
-            <button key={k} type="button" className="keypad-button" onClick={() => pressKey(k)}>
-              {k}
-            </button>
-          ))}
-        </div>
         <div className="keypad-actions">
           <button
             type="button"
