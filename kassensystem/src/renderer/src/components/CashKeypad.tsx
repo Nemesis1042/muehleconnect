@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { formatEuro } from '../format'
 
 interface Props {
@@ -10,8 +10,6 @@ interface Props {
   onConfirm: (cashReceivedCents: number, printReceipt: boolean) => void
   onCancel: () => void
 }
-
-const KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', '⌫']
 
 // Übliche Scheine bis 50 € - größere Scheine (100/200/500) kommen beim Kassieren an einem
 // Fest-Stand praktisch nicht vor, deshalb bewusst nicht mit aufgenommen.
@@ -45,6 +43,24 @@ export default function CashKeypad({
   function addBill(cents: number): void {
     setInput((prev) => String((prev === '' ? 0 : Number(prev)) + cents))
   }
+
+  // Der erhaltene Betrag wird über die Tastatur eingegeben (kein Ziffernblock auf dem Bildschirm
+  // mehr) - Enter bestätigt, Escape bricht ab, wie bei jedem anderen Dialog.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key >= '0' && e.key <= '9') {
+        pressKey(e.key)
+      } else if (e.key === 'Backspace') {
+        pressKey('⌫')
+      } else if (e.key === 'Enter') {
+        if (canConfirm) onConfirm(receivedCents, false)
+      } else if (e.key === 'Escape') {
+        if (!submitting) onCancel()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  })
 
   return (
     <div className="modal-backdrop">
@@ -88,13 +104,6 @@ export default function CashKeypad({
           ))}
         </div>
 
-        <div className="keypad">
-          {KEYS.map((k) => (
-            <button key={k} type="button" className="keypad-button" onClick={() => pressKey(k)}>
-              {k}
-            </button>
-          ))}
-        </div>
         <div className="keypad-actions">
           <button
             type="button"

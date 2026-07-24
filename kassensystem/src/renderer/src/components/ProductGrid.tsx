@@ -6,12 +6,21 @@ interface Props {
   products: Product[]
   onAdd: (productId: number) => void
   onToggleActive: (productId: number, active: boolean) => void
+  /** Zifferntasten-Shortcuts pausieren, während z.B. der Bezahl-Dialog offen ist und dieselben
+   * Tasten für die Betragseingabe gebraucht werden. */
+  shortcutsEnabled?: boolean
 }
 
 /** Zifferntasten 1-9 sind Shortcuts für die ersten 9 Produkte der aktuell sichtbaren Kategorie. */
-export default function ProductGrid({ products, onAdd, onToggleActive }: Props): JSX.Element {
+export default function ProductGrid({
+  products,
+  onAdd,
+  onToggleActive,
+  shortcutsEnabled = true
+}: Props): JSX.Element {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
+      if (!shortcutsEnabled) return
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       const index = Number(e.key) - 1
       if (index >= 0 && index < 9 && products[index]?.active) {
@@ -20,7 +29,7 @@ export default function ProductGrid({ products, onAdd, onToggleActive }: Props):
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [products, onAdd])
+  }, [products, onAdd, shortcutsEnabled])
 
   return (
     <div className="product-grid">
