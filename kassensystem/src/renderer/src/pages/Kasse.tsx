@@ -225,6 +225,7 @@ export default function Kasse(): JSX.Element {
             products={visibleProducts}
             onAdd={addOne}
             onToggleActive={(id, active) => void toggleProductActive(id, active)}
+            shortcutsEnabled={!checkoutOpen}
           />
         </div>
 

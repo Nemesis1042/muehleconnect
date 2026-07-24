@@ -235,7 +235,9 @@
 }
 
 .cash-keypad {
-  width: 480px;
+  width: min(560px, 94vw);
+  max-height: 92vh;
+  overflow-y: auto;
 }
 
 .cash-keypad h2 {

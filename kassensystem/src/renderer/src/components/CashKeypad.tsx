@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { formatEuro } from '../format'
 
 interface Props {
@@ -45,6 +45,24 @@ export default function CashKeypad({
   function addBill(cents: number): void {
     setInput((prev) => String((prev === '' ? 0 : Number(prev)) + cents))
   }
+
+  // Der erhaltene Betrag lässt sich zusätzlich zum Antippen der Ziffernblock-Buttons auch direkt
+  // über die Tastatur eingeben - Enter bestätigt, Escape bricht ab, wie bei jedem anderen Dialog.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key >= '0' && e.key <= '9') {
+        pressKey(e.key)
+      } else if (e.key === 'Backspace') {
+        pressKey('⌫')
+      } else if (e.key === 'Enter') {
+        if (canConfirm) onConfirm(receivedCents, false)
+      } else if (e.key === 'Escape') {
+        if (!submitting) onCancel()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  })
 
   return (
     <div className="modal-backdrop">
