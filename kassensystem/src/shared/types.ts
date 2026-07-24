@@ -71,7 +71,7 @@ export interface CreateSaleInput {
   cashReceivedCents: number
 }
 
-/** printReceipt/printVouchers default to false/true - see printSale() in src/main/printer.ts. */
+/** Both default to false - see printSale() in src/main/printer.ts. */
 export interface PrintSaleOptions {
   printReceipt?: boolean
   printVouchers?: boolean
@@ -198,6 +198,7 @@ export interface KassenApi {
     create(input: CreateSaleInput, printOptions?: PrintSaleOptions): Promise<CreateSaleResult>
     reprint(saleId: number, options?: PrintSaleOptions): Promise<PrintResult>
     void(saleId: number): Promise<SaleRecord>
+    printVoucherPreview(lines: CartInputLine[]): Promise<PrintResult>
   }
   printer: {
     listDevices(): Promise<UsbDeviceInfo[]>

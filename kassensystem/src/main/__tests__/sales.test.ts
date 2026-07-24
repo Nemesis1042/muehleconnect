@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { initDb } from '../db'
+import { getDb, initDb } from '../db'
 import { createProduct, removeProduct } from '../products'
-import { createSale, listAllSaleItemsForExport, voidSale } from '../sales'
+import { createSale, expandCartForPreview, listAllSaleItemsForExport, voidSale } from '../sales'
 import { getJournal } from '../journal'
 
 // initDb(':memory:') never touches Electron's `app.getPath`, so this runs outside the Electron
@@ -197,5 +197,29 @@ describe('listAllSaleItemsForExport', () => {
       voided: true
     })
     expect(pfandRow).toMatchObject({ quantity: 2, priceCents: 50, totalCents: 100, voided: true })
+  })
+})
+
+describe('expandCartForPreview', () => {
+  it('expands cart lines (incl. auto-added Pfand) without creating a sale', () => {
+    const bier = createProduct({
+      name: 'Bier',
+      priceCents: 200,
+      category: 'Getränke',
+      taxClass: 'B',
+      depositCents: 50,
+      sortOrder: 0,
+      active: true
+    })
+
+    const lines = expandCartForPreview([{ productId: bier.id, quantity: 2 }])
+
+    const bierLine = lines.find((l) => l.productName === 'Bier')
+    const pfandLine = lines.find((l) => l.isDeposit)
+    expect(bierLine).toMatchObject({ quantity: 2, priceCents: 200 })
+    expect(pfandLine).toMatchObject({ quantity: 2, priceCents: 50 })
+
+    const salesCount = (getDb().prepare('SELECT COUNT(*) as c FROM sales').get() as { c: number }).c
+    expect(salesCount).toBe(0)
   })
 })

@@ -5,7 +5,9 @@ interface Props {
   totalCents: number
   submitting: boolean
   error?: string | null
-  onConfirm: (cashReceivedCents: number, printReceipt: boolean) => void
+  voucherError?: string | null
+  onRetryVoucherPrint: () => void
+  onConfirm: (cashReceivedCents: number) => void
   onCancel: () => void
 }
 
@@ -19,6 +21,8 @@ export default function CashKeypad({
   totalCents,
   submitting,
   error,
+  voucherError,
+  onRetryVoucherPrint,
   onConfirm,
   onCancel
 }: Props): JSX.Element {
@@ -46,6 +50,16 @@ export default function CashKeypad({
     <div className="modal-backdrop">
       <div className="modal card cash-keypad">
         <h2>Kassieren</h2>
+
+        {voucherError && (
+          <div className="form-error cash-keypad-voucher-error">
+            <p>Wertbons konnten nicht gedruckt werden: {voucherError}</p>
+            <button type="button" className="button-secondary" onClick={onRetryVoucherPrint}>
+              Erneut drucken
+            </button>
+          </div>
+        )}
+
         <div className="cash-row">
           <span>Summe</span>
           <span>{formatEuro(totalCents)}</span>
@@ -100,10 +114,10 @@ export default function CashKeypad({
           </button>
           <button
             className="button-primary"
-            onClick={() => onConfirm(receivedCents, true)}
+            onClick={() => onConfirm(receivedCents)}
             disabled={!canConfirm}
           >
-            {submitting ? 'Wird gedruckt…' : canConfirm ? 'Bon drucken' : 'Bestätigen'}
+            {submitting ? 'Wird gespeichert…' : 'Bestätigen'}
           </button>
         </div>
       </div>

@@ -23,22 +23,25 @@ einem Fest) und funktioniert komplett offline.
 - Getränke mit Pfand (z. B. Becher) bekommen automatisch eine zusätzliche "Pfand"-Position im
   Warenkorb dazu — das muss nicht separat angeklickt werden.
 - Rechts zeigt der Warenkorb alle Positionen und die laufende Summe. Ein Klick auf "Kassieren"
-  öffnet ein Zahlenfeld: Der erhaltene Bargeldbetrag wird eingetippt, das Wechselgeld wird
-  automatisch berechnet und angezeigt. Erst nach Bestätigen wird der Verkauf abgeschlossen.
+  öffnet das Bezahl-Fenster — dabei druckt die App sofort **für jeden Artikel im Warenkorb einen
+  eigenen Wertbon** (auch für Pfand-Positionen), damit die Bons schon fertig sind, während der
+  erhaltene Bargeldbetrag eingetippt wird. Diese kleinen Bons sind dafür gedacht, an der
+  Essens-/Getränkeausgabe gegen die jeweilige Ware eingetauscht zu werden — wer z. B. 2× Bier und
+  1× Bratwurst kauft, bekommt 3 einzelne Bons zum Abgeben. Es lassen sich zusätzlich vorgefertigte
+  Scheine (5/10/20/50 €) antippen statt den Betrag einzutippen; "Passend" setzt den erhaltenen
+  Betrag direkt auf die Summe. Erst nach Bestätigen wird der Verkauf gespeichert.
 
 ### 2. Was gedruckt wird
 
-Nach dem Bestätigen druckt die App automatisch:
+- **Wertbons**: siehe oben — werden schon beim Öffnen von "Kassieren" gedruckt, noch bevor der
+  Verkauf bestätigt ist.
+- **Kassenbon**: wird **nicht** automatisch mitgedruckt, sondern ist eine eigene Aktion über den
+  "Bon drucken"-Knopf, der nach dem Bestätigen erscheint — z. B. falls im Einzelfall doch ein
+  Gesamtbeleg mit allen Positionen, Preis, Summe und MwSt.-Aufschlüsselung gebraucht wird.
 
-1. **Einen Kassenbon** für den gesamten Einkauf: alle Positionen mit Preis, Gesamtsumme und
-   Aufschlüsselung der Mehrwertsteuer.
-2. **Für jeden gekauften Artikel einen eigenen Wertbon** (auch für Pfand-Positionen). Diese
-   kleinen Bons sind dafür gedacht, an der Essens-/Getränkeausgabe gegen die jeweilige Ware
-   eingetauscht zu werden — wer z. B. 2× Bier und 1× Bratwurst kauft, bekommt 3 einzelne Bons zum
-   Abgeben plus den einen Kassenbon als Beleg.
-
-Ist gerade kein Drucker angeschlossen bzw. eingerichtet, meldet die App das nach dem Kassieren und
-bietet einen "Erneut drucken"-Knopf an — der Verkauf selbst geht dabei nicht verloren.
+Schlägt der Wertbon-Druck beim Öffnen von "Kassieren" fehl (z. B. kein Drucker angeschlossen),
+zeigt das Bezahl-Fenster das direkt an und bietet einen "Erneut drucken"-Knopf — der Verkauf lässt
+sich trotzdem normal abschließen.
 
 ### 3. Produkte & Einstellungen
 

@@ -6,6 +6,7 @@ import type {
   BaudGuidedTestResult,
   BaudProbeResult,
   BaudTestSlipAttempt,
+  CartLine,
   JournalReport,
   PrintJobItem,
   PrintResult,
@@ -386,7 +387,7 @@ function fillVoucher(
   settings: Settings,
   productName: string,
   priceCents: number,
-  voucherNumber: number
+  voucherNumber?: number
 ): void {
   printer.alignCenter()
   printQuadBold(printer, settings.titleLine1)
@@ -396,7 +397,10 @@ function fillVoucher(
   printer.println(formatEuro(priceCents))
   printer.newLine()
   printer.alignCenter()
-  printer.println(`${formatDate(new Date())} # Kasse ${settings.registerNumber} - No. ${voucherNumber}`)
+  // Vorab-Wertbons (siehe printVoucherPreview) werden gedruckt, bevor der Verkauf überhaupt
+  // angelegt ist - es gibt also noch keine echte, fortlaufende Nummer zu diesem Zeitpunkt.
+  const suffix = voucherNumber !== undefined ? ` - No. ${voucherNumber}` : ''
+  printer.println(`${formatDate(new Date())} # Kasse ${settings.registerNumber}${suffix}`)
   printer.partialCut()
 }
 
@@ -700,15 +704,36 @@ export async function printTestPage(settings: Settings): Promise<PrintResult> {
   return { ok: job.ok, jobs: [job] }
 }
 
+/**
+ * Druckt Wertbons direkt aus den Warenkorb-Inhalten, bevor überhaupt ein Verkauf angelegt wurde -
+ * ausgelöst beim Öffnen von "Kassieren", damit sie schon fertig sind, während der Betrag eingetippt
+ * wird, statt erst nach dem Bestätigen. Ohne zugehörigen Verkauf gibt es noch keine echte,
+ * fortlaufende Wertbon-Nummer (die wird erst in createSale() vergeben) - fillVoucher() lässt die
+ * Nummernzeile deshalb bewusst weg. Wird der Bezahlvorgang abgebrochen, bleibt es bei den bereits
+ * gedruckten, nummernlosen Zetteln; es wird nichts in der Datenbank angelegt.
+ */
+export async function printVoucherPreview(lines: CartLine[], settings: Settings): Promise<PrintResult> {
+  const session = createPrinterSession(settings)
+  for (const line of lines) {
+    for (let i = 0; i < line.quantity; i++) {
+      fillVoucher(session.printer, settings, line.productName, line.priceCents)
+    }
+  }
+  const job = await runJob(session, 'voucher')
+  return { ok: job.ok, jobs: [job] }
+}
+
 export async function printSale(
   sale: SaleRecord,
   settings: Settings,
   options: { printReceipt?: boolean; printVouchers?: boolean } = {}
 ): Promise<PrintResult> {
-  // Wertbons werden beim Verkauf immer gedruckt; der kombinierte Kassenbon ist eine bewusste
-  // Extra-Aktion über einen eigenen Knopf und deshalb standardmäßig aus.
+  // Wertbons werden inzwischen schon vor dem Bestätigen über printVoucherPreview() gedruckt (siehe
+  // Kasse.tsx, Klick auf "Kassieren"); dieser Weg hier druckt standardmäßig nichts mehr automatisch
+  // - sowohl Kassenbon als auch Wertbon-Neudruck (z.B. nach einem Druckfehler) müssen explizit
+  // angefordert werden.
   const printReceipt = options.printReceipt ?? false
-  const printVouchers = options.printVouchers ?? true
+  const printVouchers = options.printVouchers ?? false
   if (!printReceipt && !printVouchers) return { ok: true, jobs: [] }
 
   // Ein Verkauf mit mehreren Artikeln braucht mehrere Wertbons - vorher hat jeder einzelne Bon
