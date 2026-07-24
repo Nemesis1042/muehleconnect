@@ -4,12 +4,14 @@
   display: flex;
   gap: 1.25rem;
   height: 100%;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .kasse-products {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .category-tabs {
@@ -38,8 +40,11 @@
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 1rem;
+  flex: 1;
+  align-content: stretch;
 }
 
 .product-button {
@@ -47,12 +52,12 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 1rem 0.75rem;
+  padding: 1.5rem 1.1rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.4rem;
-  min-height: 88px;
+  gap: 0.6rem;
+  min-height: 120px;
   text-align: left;
   box-shadow: var(--shadow);
 }
@@ -81,12 +86,13 @@
 
 .product-name {
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 1.25rem;
 }
 
 .product-price {
   color: var(--color-primary);
   font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .product-grid-empty {
@@ -98,10 +104,12 @@
 
 .product-tile {
   position: relative;
+  height: 100%;
 }
 
 .product-tile .product-button {
   width: 100%;
+  height: 100%;
 }
 
 .product-tile-inactive .product-button {
@@ -235,7 +243,7 @@
 }
 
 .cash-keypad {
-  width: min(560px, 94vw);
+  width: min(760px, 94vw);
   max-height: 92vh;
   overflow-y: auto;
 }
