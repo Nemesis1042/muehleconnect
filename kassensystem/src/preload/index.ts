@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type {
+  CartInputLine,
   CreateSaleInput,
   KassenApi,
   PrintSaleOptions,
@@ -22,7 +23,9 @@ const api: KassenApi = {
       ipcRenderer.invoke('sale:create', input, printOptions),
     reprint: (saleId: number, options?: PrintSaleOptions) =>
       ipcRenderer.invoke('sale:reprint', saleId, options),
-    void: (saleId: number) => ipcRenderer.invoke('sale:void', saleId)
+    void: (saleId: number) => ipcRenderer.invoke('sale:void', saleId),
+    printVoucherPreview: (lines: CartInputLine[]) =>
+      ipcRenderer.invoke('sale:printVoucherPreview', lines)
   },
   printer: {
     listDevices: () => ipcRenderer.invoke('printer:listDevices'),

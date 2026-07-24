@@ -263,6 +263,18 @@
   font-size: 0.9rem;
 }
 
+.cash-keypad-voucher-error {
+  background: var(--color-danger);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.cash-keypad-voucher-error p {
+  margin: 0 0 0.5rem;
+}
+
 .cash-keypad-bills {
   display: flex;
   gap: 0.5rem;

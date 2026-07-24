@@ -7,7 +7,7 @@ import {
   reorderProducts,
   updateProduct
 } from './products'
-import { createSale, getSale, voidSale } from './sales'
+import { createSale, expandCartForPreview, getSale, voidSale } from './sales'
 import { getSettings, updateSettings } from './settings'
 import { getJournal } from './journal'
 import {
@@ -17,6 +17,7 @@ import {
   printJournalReport,
   printSale,
   printTestPage,
+  printVoucherPreview,
   probeSerialBaudRate
 } from './printer'
 import {
@@ -26,7 +27,7 @@ import {
   runAutoBackup
 } from './backup'
 import { exportSalesToCsv, exportSalesToExcel, exportSalesToPdf } from './export'
-import type { CreateSaleInput, PrintSaleOptions, ProductInput } from '../shared/types'
+import type { CartInputLine, CreateSaleInput, PrintSaleOptions, ProductInput } from '../shared/types'
 
 export function registerIpcHandlers(): void {
   ipcMain.handle('products:list', () => listProducts())
@@ -52,6 +53,9 @@ export function registerIpcHandlers(): void {
     return printSale(sale, getSettings(), options)
   })
   ipcMain.handle('sale:void', (_e, saleId: number) => voidSale(saleId))
+  ipcMain.handle('sale:printVoucherPreview', (_e, lines: CartInputLine[]) =>
+    printVoucherPreview(expandCartForPreview(lines), getSettings())
+  )
 
   ipcMain.handle('printer:listDevices', () => listUsbPrinterDevices())
   ipcMain.handle('printer:listSerialPorts', () => listSerialPorts())

@@ -6,9 +6,10 @@ import ProductGrid from '../components/ProductGrid'
 import Cart from '../components/Cart'
 import CashKeypad from '../components/CashKeypad'
 
-const VOUCHERS_ONLY: PrintSaleOptions = { printReceipt: false, printVouchers: true }
+// Wertbons drucken schon vor dem Bestätigen (siehe handleCheckout/printVoucherPreview) - beim
+// eigentlichen Speichern des Verkaufs wird deshalb standardmäßig nichts mehr automatisch gedruckt.
+const NOTHING_AUTOMATIC: PrintSaleOptions = { printReceipt: false, printVouchers: false }
 const RECEIPT_ONLY: PrintSaleOptions = { printReceipt: true, printVouchers: false }
-const RECEIPT_AND_VOUCHERS: PrintSaleOptions = { printReceipt: true, printVouchers: true }
 
 export default function Kasse(): JSX.Element {
   const [products, setProducts] = useState<Product[]>([])
@@ -20,9 +21,10 @@ export default function Kasse(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [lastSale, setLastSale] = useState<SaleRecord | null>(null)
   const [lastPrintResult, setLastPrintResult] = useState<PrintResult | null>(null)
-  const [lastPrintOptions, setLastPrintOptions] = useState<PrintSaleOptions>(VOUCHERS_ONLY)
+  const [lastPrintOptions, setLastPrintOptions] = useState<PrintSaleOptions>(NOTHING_AUTOMATIC)
   const [voiding, setVoiding] = useState(false)
   const [printingReceipt, setPrintingReceipt] = useState(false)
+  const [voucherPreviewError, setVoucherPreviewError] = useState<string | null>(null)
 
   useEffect(() => {
     void loadProducts()
@@ -86,18 +88,19 @@ export default function Kasse(): JSX.Element {
     })
   }
 
-  async function confirmPayment(cashReceivedCents: number, printReceipt: boolean): Promise<void> {
+  // Wertbons sind zu diesem Zeitpunkt bereits gedruckt (siehe handleCheckout) - hier wird nur noch
+  // der Verkauf selbst gespeichert, ohne erneut etwas automatisch zu drucken.
+  async function confirmPayment(cashReceivedCents: number): Promise<void> {
     setSubmitting(true)
     setError(null)
-    const printOptions = printReceipt ? RECEIPT_AND_VOUCHERS : VOUCHERS_ONLY
     try {
       const result = await window.kassen.sale.create(
         { lines: cartInputLines, cashReceivedCents },
-        printOptions
+        NOTHING_AUTOMATIC
       )
       setLastSale(result.sale)
       setLastPrintResult(result.printResult)
-      setLastPrintOptions(printOptions)
+      setLastPrintOptions(NOTHING_AUTOMATIC)
       setRawCart({})
       setCheckoutOpen(false)
     } catch (e) {
@@ -105,6 +108,19 @@ export default function Kasse(): JSX.Element {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  async function printVoucherPreview(): Promise<void> {
+    setVoucherPreviewError(null)
+    const result = await window.kassen.sale.printVoucherPreview(cartInputLines)
+    if (!result.ok) {
+      setVoucherPreviewError(result.jobs[0]?.error ?? 'Unbekannter Fehler beim Wertbon-Druck')
+    }
+  }
+
+  function handleCheckout(): void {
+    setCheckoutOpen(true)
+    void printVoucherPreview()
   }
 
   async function retryPrint(): Promise<void> {
@@ -215,7 +231,7 @@ export default function Kasse(): JSX.Element {
           lines={cartLines}
           totalCents={totalCents}
           onRemoveOne={removeOne}
-          onCheckout={() => setCheckoutOpen(true)}
+          onCheckout={handleCheckout}
         />
       </div>
 
@@ -224,8 +240,13 @@ export default function Kasse(): JSX.Element {
           totalCents={totalCents}
           submitting={submitting}
           error={error}
-          onConfirm={(cash, printReceipt) => void confirmPayment(cash, printReceipt)}
-          onCancel={() => setCheckoutOpen(false)}
+          voucherError={voucherPreviewError}
+          onRetryVoucherPrint={() => void printVoucherPreview()}
+          onConfirm={(cash) => void confirmPayment(cash)}
+          onCancel={() => {
+            setCheckoutOpen(false)
+            setVoucherPreviewError(null)
+          }}
         />
       )}
     </div>

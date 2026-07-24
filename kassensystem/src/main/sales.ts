@@ -1,7 +1,25 @@
 import { getDb, nextReceiptNumber, nextVoucherNumbers } from './db'
 import { listProducts, getPfandProduct } from './products'
 import { expandCart, cartTotalCents, changeCents } from '../shared/cart'
-import type { CreateSaleInput, SaleExportRow, SaleItemRecord, SaleRecord } from '../shared/types'
+import type {
+  CartInputLine,
+  CartLine,
+  CreateSaleInput,
+  SaleExportRow,
+  SaleItemRecord,
+  SaleRecord
+} from '../shared/types'
+
+/**
+ * Expands raw cart lines (product IDs + quantities) into full lines with names/prices, without
+ * creating a sale or touching any counters - used to print Wertbons the moment "Kassieren" wird
+ * geöffnet, before the amount received is even known, let alone confirmed.
+ */
+export function expandCartForPreview(input: CartInputLine[]): CartLine[] {
+  const products = listProducts()
+  const pfand = getPfandProduct()
+  return expandCart(input, products, pfand)
+}
 
 export function createSale(input: CreateSaleInput): SaleRecord {
   const products = listProducts()
