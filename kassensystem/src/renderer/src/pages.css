@@ -330,6 +330,11 @@
   gap: 0.75rem;
 }
 
+.cash-keypad-receipt-button {
+  width: 100%;
+  margin-top: 0.6rem;
+}
+
 .cash-keypad-passend {
   background: var(--color-danger);
   color: #fff;
@@ -351,6 +356,11 @@
 
 .cash-keypad .modal-actions button {
   padding: 1.1rem 1.75rem;
+  font-size: 1.2rem;
+}
+
+.cash-keypad .cash-keypad-receipt-button {
+  padding: 1.1rem 0;
   font-size: 1.2rem;
 }
 

@@ -89,18 +89,19 @@ export default function Kasse(): JSX.Element {
   }
 
   // Wertbons sind zu diesem Zeitpunkt bereits gedruckt (siehe handleCheckout) - hier wird nur noch
-  // der Verkauf selbst gespeichert, ohne erneut etwas automatisch zu drucken.
-  async function confirmPayment(cashReceivedCents: number): Promise<void> {
+  // der Verkauf gespeichert und optional, auf ausdrücklichen Wunsch, der Kassenbon mitgedruckt.
+  async function confirmPayment(cashReceivedCents: number, printReceipt: boolean): Promise<void> {
     setSubmitting(true)
     setError(null)
+    const printOptions = printReceipt ? RECEIPT_ONLY : NOTHING_AUTOMATIC
     try {
       const result = await window.kassen.sale.create(
         { lines: cartInputLines, cashReceivedCents },
-        NOTHING_AUTOMATIC
+        printOptions
       )
       setLastSale(result.sale)
       setLastPrintResult(result.printResult)
-      setLastPrintOptions(NOTHING_AUTOMATIC)
+      setLastPrintOptions(printOptions)
       setRawCart({})
       setCheckoutOpen(false)
     } catch (e) {
@@ -242,7 +243,7 @@ export default function Kasse(): JSX.Element {
           error={error}
           voucherError={voucherPreviewError}
           onRetryVoucherPrint={() => void printVoucherPreview()}
-          onConfirm={(cash) => void confirmPayment(cash)}
+          onConfirm={(cash, printReceipt) => void confirmPayment(cash, printReceipt)}
           onCancel={() => {
             setCheckoutOpen(false)
             setVoucherPreviewError(null)

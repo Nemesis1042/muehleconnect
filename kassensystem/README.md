@@ -91,6 +91,13 @@ chmod +x "dist/Kassensystem Dobelmühle-x.x.x.AppImage"
 ./dist/"Kassensystem Dobelmühle-x.x.x.AppImage"
 ```
 
+> Kein Linux-Rechner griffbereit (oder zusätzlich ein macOS-Build gewünscht)? Der Workflow
+> "Linux/macOS-Installer bauen" (`.github/workflows/build-linux-mac-installer.yml`) baut beides auf
+> passenden GitHub-Runnern — im Repo unter "Actions" manuell auslösen ("Run workflow"), `.AppImage`
+> bzw. `.dmg` stehen danach als Artifact bereit. Der macOS-Build ist unsigniert (kein
+> Apple-Entwickler-Zertifikat vorhanden) — beim ersten Start warnt macOS deshalb vor einem
+> "unbekannten Entwickler", die App lässt sich trotzdem über Rechtsklick → "Öffnen" starten.
+
 *Alternative für einen schnellen ersten Test ohne Installer (beide Systeme):* `npm run dev`
 startet die App direkt aus dem Projektordner heraus.
 
