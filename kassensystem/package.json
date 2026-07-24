@@ -1,6 +1,6 @@
 {
   "name": "kassensystem",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Kassensystem mit Wertbon-Druck für Dobelmühle-Feste",
   "main": "./out/main/index.js",
   "author": "Dobelmühle gGmbH",
