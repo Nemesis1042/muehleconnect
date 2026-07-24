@@ -19,7 +19,9 @@
     "dist:win": "npm run build && electron-builder --win",
     "predist:win": "electron-rebuild -f -w better-sqlite3,usb,serialport",
     "dist:linux": "npm run build && electron-builder --linux",
-    "predist:linux": "electron-rebuild -f -w better-sqlite3,usb,serialport"
+    "predist:linux": "electron-rebuild -f -w better-sqlite3,usb,serialport",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "predist:mac": "electron-rebuild -f -w better-sqlite3,usb,serialport"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",
