@@ -3,6 +3,10 @@
 App zur internen Organisation der Dobelmühle. Aktuell enthalten: das **Kassensystem** für den
 Verkauf bei Festen (`kassensystem/`).
 
+**Download:** Fertige Installer für Windows (`.exe`) und Linux (`.AppImage`) — kein Programmieren
+oder Bauen nötig — stehen auf der [Releases-Seite](../../releases) bereit. Einfach die passende
+Datei herunterladen; die Windows-Installation läuft ohne Administratorrechte.
+
 ## Kassensystem – wie es funktioniert
 
 Das Kassensystem läuft als App auf einem Laptop, der per USB an einen Bondrucker angeschlossen
@@ -51,6 +55,14 @@ Unter "Kassen-Journal" lässt sich für einen beliebigen Tag eine Übersicht all
 je Artikel verkaufte Menge und Summe, dazu die Gesamteinnahmen mit Aufschlüsselung nach
 Mehrwertsteuersatz (Netto/MwSt./Brutto). Dieses Journal kann ebenfalls ausgedruckt werden, z. B.
 für die Kassenabrechnung nach dem Fest.
+
+### 5. Datensicherung
+
+Nach jedem Verkauf legt die App automatisch eine Sicherungskopie der Kassendaten an — ohne dass
+jemand etwas tun muss. Unter "Einstellungen" lässt sich zusätzlich jederzeit manuell eine Kopie
+speichern (z. B. auf einen USB-Stick) sowie eine zuvor gesicherte Kopie wiederherstellen, falls der
+Kassen-Laptop getauscht werden muss. Dort lassen sich außerdem alle Verkäufe als CSV/Excel/PDF
+exportieren, z. B. für die Buchhaltung.
 
 ## Technisches Setup
 
