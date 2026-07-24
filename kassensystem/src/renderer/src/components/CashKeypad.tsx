@@ -100,10 +100,10 @@ export default function CashKeypad({
           </button>
           <button
             className="button-primary"
-            onClick={() => onConfirm(receivedCents, true)}
+            onClick={() => onConfirm(receivedCents, false)}
             disabled={!canConfirm}
           >
-            {submitting ? 'Wird gedruckt…' : canConfirm ? 'Bon drucken' : 'Bestätigen'}
+            {submitting ? 'Wird gedruckt…' : 'Bestätigen'}
           </button>
         </div>
       </div>
