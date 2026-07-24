@@ -11,6 +11,10 @@ interface Props {
 
 const KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00', '⌫']
 
+// Übliche Scheine bis 50 € - größere Scheine (100/200/500) kommen beim Kassieren an einem
+// Fest-Stand praktisch nicht vor, deshalb bewusst nicht mit aufgenommen.
+const BILLS_CENTS = [500, 1000, 2000, 5000]
+
 export default function CashKeypad({
   totalCents,
   submitting,
@@ -32,6 +36,12 @@ export default function CashKeypad({
     setInput((prev) => (prev + key).slice(0, 8))
   }
 
+  // Scheine werden addiert statt den Betrag zu ersetzen, damit man z.B. einen 20er und einen 5er
+  // antippt, wenn genau die kombiniert übergeben wurden - wie beim echten Nachzählen der Scheine.
+  function addBill(cents: number): void {
+    setInput((prev) => String((prev === '' ? 0 : Number(prev)) + cents))
+  }
+
   return (
     <div className="modal-backdrop">
       <div className="modal card cash-keypad">
@@ -51,6 +61,19 @@ export default function CashKeypad({
 
         {error && <p className="form-error">{error}</p>}
 
+        <div className="cash-keypad-bills">
+          {BILLS_CENTS.map((cents) => (
+            <button
+              key={cents}
+              type="button"
+              className="cash-keypad-bill"
+              onClick={() => addBill(cents)}
+            >
+              {formatEuro(cents)}
+            </button>
+          ))}
+        </div>
+
         <div className="keypad">
           {KEYS.map((k) => (
             <button key={k} type="button" className="keypad-button" onClick={() => pressKey(k)}>
@@ -61,7 +84,7 @@ export default function CashKeypad({
         <div className="keypad-actions">
           <button
             type="button"
-            className="button-secondary"
+            className="cash-keypad-passend"
             onClick={() => setInput(String(totalCents))}
           >
             Passend
@@ -77,20 +100,12 @@ export default function CashKeypad({
           </button>
           <button
             className="button-primary"
-            onClick={() => onConfirm(receivedCents, false)}
+            onClick={() => onConfirm(receivedCents, true)}
             disabled={!canConfirm}
           >
-            {submitting ? 'Wird gedruckt…' : 'Bestätigen'}
+            {submitting ? 'Wird gedruckt…' : canConfirm ? 'Bon drucken' : 'Bestätigen'}
           </button>
         </div>
-        <button
-          type="button"
-          className="button-secondary cash-keypad-receipt-button"
-          onClick={() => onConfirm(receivedCents, true)}
-          disabled={!canConfirm}
-        >
-          Bestätigen + Bon drucken
-        </button>
       </div>
     </div>
   )

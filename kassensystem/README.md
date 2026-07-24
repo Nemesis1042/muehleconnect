@@ -50,7 +50,14 @@ npm install
 
 Das lädt alle benötigten Programmbibliotheken herunter (dauert beim ersten Mal ein paar Minuten).
 
-### 3. App bauen und installieren
+### 3. App installieren
+
+**Einfachster Weg:** Auf der [Releases-Seite](../../releases) des Repos liegt bei jeder
+veröffentlichten Version bereits ein fertiger Installer für Windows (`.exe`) und Linux
+(`.AppImage`) zum Herunterladen — kein `npm install`/Bauen nötig. Einfach die passende Datei
+herunterladen und wie unten beschrieben ausführen.
+
+**Nur nötig, wenn kein fertiger Installer verfügbar ist oder selbst gebaut werden soll:**
 
 **Windows:**
 
@@ -252,3 +259,28 @@ npm run build         # TypeScript-Check + electron-vite build
 npm run dist:win      # Windows-Installer (electron-builder)
 npm run dist:linux    # Linux AppImage (electron-builder)
 ```
+
+### Release veröffentlichen
+
+Für eine offizielle, versionierte Veröffentlichung (statt eines einzelnen Ad-hoc-Builds) gibt es
+den Workflow `.github/workflows/release.yml`. Er baut **Windows-Installer und Linux-AppImage in
+einem Durchgang** und hängt beide direkt als herunterladbare Dateien an ein GitHub-Release —
+sichtbar auf der [Releases-Seite](../../releases), ohne dass jemand die App selbst bauen muss.
+
+So wird ein Release veröffentlicht:
+
+1. Versionsnummer in `kassensystem/package.json` (Feld `"version"`) erhöhen und committen.
+2. Einen Git-Tag im Format `vX.Y.Z` erstellen und pushen (Beispiel):
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+3. Der Workflow startet automatisch, baut beide Plattformen und veröffentlicht das Release —
+   Fortschritt unter "Actions" im GitHub-Repo verfolgbar. Nach ein paar Minuten stehen `.exe` und
+   `.AppImage` auf der Releases-Seite zum Download bereit.
+
+Ein manuelles Auslösen über "Run workflow" (ohne Tag) baut testweise beide Installer und lädt sie
+nur als Artifact hoch, veröffentlicht aber **kein** Release — dafür fehlt ohne Tag die
+Versionsnummer. Der bereits bestehende Workflow "Windows-Installer bauen" bleibt daneben für
+schnelle Windows-only-Testbuilds während der Entwicklung erhalten (z. B. um einen einzelnen Fix
+ohne eigenen Windows-Rechner zu verifizieren).
